@@ -134,8 +134,8 @@ def insert_assignment():
     format_str = " - "
 
     class_name = input(f"{format_str}class name: ")
-    assignment_name = input(f"{format_str}assignment name: ")
     template = null_sieve(input(f"{format_str}template: "))
+    assignment_name = input(f"{format_str}assignment name: ")
 
     conn = connect_to_db()
     template_excerpt = (None, None, None)
