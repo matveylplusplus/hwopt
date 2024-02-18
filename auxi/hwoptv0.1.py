@@ -1,18 +1,25 @@
 """
 To do ASAP:
-    - insert()
-        - insert_class() X
-        - insert_late_policy() X
-        - insert_template() X
-        - insert_assignment() X
+    - Implement templated duetime
+        - change tables
+            - lp_template_deadvar_phases
+            - assignment_templates 
+            - assignments
+        - change prindex computation
+        - change input functions
+            - insert_late_policy()
+            - insert assignment_template()
+            - insert assignment()
+        - update existing entries
+            - lp_template_deadvar_phases
+            - assignment_templates 
+            - assignments 
+
+Future Work:
     - drop_assignment()
-    - compute_prindex() X
-        - clean deadlines X
     - update_assignment()
         - update_points()
         - update_deadlines()
-
-Future Work:
     - Updating templates updates all users of that template, at least for points (late policies would require the user to enter extra deadlines if the # of independent deadlines in the late policy increases, which might be too complicated and useless to be worth implementing)
     - Accounting for drops 
     - Accounting for extra credit
@@ -997,4 +1004,6 @@ populate db thru hwopt.py, and then dump as spring2024.sql for quick backup
 
 two options for point_insert()...either ask for value and quantity separately and then compute value/quantity or let user input a fraction and then parse fraction
     - problem with asking for quantity is that it might not even be relevant...if syllabus gives you the worth of each lab assignment (eg 100pts) and user wants a lab_assignment_template they should be able to just enter 100
+
+the time at which an assignment is due could be a property of the assignment, the template, or the late policy...3 coalesces?
 """
