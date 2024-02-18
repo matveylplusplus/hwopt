@@ -1,21 +1,16 @@
 """
 To do ASAP:
     - Implement templated duetime
-        - X change tables
-            - X undo lp_template_deadvar_phases fuckery
-            - X assignment_templates
-            - X undo assignments fuckery
-            - X deadvar_maps
+        - X tables
+            - X assignment_deadvar_maps
+            - X template_deadvar_maps
+            - X lp_template_deadvar_phases
         - fix prindex computation
+        - cleanup funct
         - change input functions
             - insert_late_policy()
             - insert assignment_template()
             - insert assignment()
-        - update existing entries
-            - X undo lp_template_deadvar_phases fuckery
-            - X undo assignment_templates fuckery
-            -  assignment_templates
-            -  deadvar_maps
 
 Future Work:
     - drop_assignment()
@@ -1013,4 +1008,13 @@ ideal scheme: late policies can be as specific as they want, and can be override
 
 assignments_deadvar_maps
 templates_deadvar_maps
+
+DELETE FROM assignment_deadvar_maps WHERE NOT EXISTS (
+    SELECT * FROM assignments 
+    LEFT JOIN assignment_templates ON assignment_templates.assignment_type = assignments.template AND assignment_templates.class_name = assignments.class_name
+    LEFT JOIN template_deadvar_maps ON template_deadvar_maps.template = assignment_templates.assignment_type AND template_deadvar_maps.class_name = assignment_templates.class_name
+    
+    );
+
+E^FW -> ~EvFR
 """

@@ -89,8 +89,6 @@ CREATE TABLE assignment_templates (
         0 <= commute_factor
         AND commute_factor <= 1
     ),
-    deadline_hour INT,
-    deadline_min INT,
     FOREIGN KEY (class_name) REFERENCES classes (class_name) ON UPDATE CASCADE,
     FOREIGN KEY (late_policy_name) REFERENCES lp_templates (late_policy_name) ON UPDATE CASCADE,
     PRIMARY KEY (assignment_type, class_name)
@@ -200,9 +198,7 @@ CREATE TABLE deadvar_maps (
     assignment_name TEXT,
     class_name TEXT,
     deadline_variable TEXT,
-    deadline_date TEXT NOT NULL,
-    deadline_hour INT,
-    deadline_min INT,
+    deadline_instance TEXT NOT NULL,
     FOREIGN KEY (assignment_name, class_name) REFERENCES assignments (assignment_name, class_name) ON DELETE CASCADE,
     PRIMARY KEY (
         assignment_name,

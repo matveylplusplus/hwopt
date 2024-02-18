@@ -17,9 +17,9 @@ CREATE TABLE IF NOT EXISTS classes (
 CREATE TABLE IF NOT EXISTS lp_templates (late_policy_name TEXT PRIMARY KEY);
 CREATE TABLE IF NOT EXISTS lp_template_deadvars (
     late_policy_name TEXT,
-    deadline_variable TEXT,
+    deadvar INT,
     FOREIGN KEY (late_policy_name) REFERENCES lp_templates (late_policy_name) ON UPDATE CASCADE,
-    PRIMARY KEY (late_policy_name, deadline_variable)
+    PRIMARY KEY (late_policy_name, deadvar)
 );
 CREATE TABLE IF NOT EXISTS lp_template_deadvar_phases (
     late_policy_name TEXT,
@@ -27,10 +27,10 @@ CREATE TABLE IF NOT EXISTS lp_template_deadvar_phases (
         0 < phase_value
         AND phase_value <= 1
     ),
-    deadline_variable TEXT,
+    deadvar INT,
     hour_offset INT,
-    FOREIGN KEY (late_policy_name, deadline_variable) REFERENCES lp_template_deadvars (late_policy_name, deadline_variable) ON UPDATE CASCADE,
-    PRIMARY KEY (late_policy_name, deadline_variable, hour_offset)
+    FOREIGN KEY (late_policy_name, deadvar) REFERENCES lp_template_deadvars (late_policy_name, deadvar) ON UPDATE CASCADE,
+    PRIMARY KEY (late_policy_name, deadvar, hour_offset)
 );
 CREATE TABLE IF NOT EXISTS assignment_templates (
     assignment_type TEXT,
@@ -44,6 +44,20 @@ CREATE TABLE IF NOT EXISTS assignment_templates (
     FOREIGN KEY (class_name) REFERENCES classes (class_name) ON UPDATE CASCADE,
     FOREIGN KEY (late_policy_name) REFERENCES lp_templates (late_policy_name) ON UPDATE CASCADE,
     PRIMARY KEY (assignment_type, class_name)
+);
+CREATE TABLE IF NOT EXISTS template_deadvar_maps (
+    template TEXT,
+    class_name TEXT,
+    deadvar INT,
+    deadline_date TEXT NOT NULL,
+    deadline_hour INT NOT NULL,
+    deadline_min INT NOT NULL,
+    FOREIGN KEY (template, class_name) REFERENCES assignment_templates (assignment_type, class_name) ON UPDATE CASCADE,
+    PRIMARY KEY (
+        template,
+        class_name,
+        deadvar
+    )
 );
 CREATE TABLE IF NOT EXISTS assignments (
     assignment_name TEXT,
@@ -60,15 +74,20 @@ CREATE TABLE IF NOT EXISTS assignments (
     FOREIGN KEY (template, class_name) REFERENCES assignment_templates (assignment_type, class_name) ON UPDATE CASCADE,
     PRIMARY KEY (assignment_name, class_name)
 );
-CREATE TABLE IF NOT EXISTS deadvar_maps (
+CREATE TABLE IF NOT EXISTS assignment_deadvar_maps (
     assignment_name TEXT,
     class_name TEXT,
-    deadline_variable TEXT,
-    deadline_instance TEXT NOT NULL,
-    FOREIGN KEY (assignment_name, class_name) REFERENCES assignments (assignment_name, class_name) ON DELETE CASCADE,
+    deadvar INT,
+    deadline_date TEXT NOT NULL,
+    deadline_hour INT NOT NULL,
+    deadline_min INT NOT NULL,
+    FOREIGN KEY (assignment_name, class_name) REFERENCES assignments (assignment_name, class_name) ON UPDATE CASCADE,
     PRIMARY KEY (
         assignment_name,
         class_name,
-        deadline_variable
+        deadvar
     )
 );
+INSERT INTO major_maps
+VALUES ('m', 1),
+    ('g', 0.8);

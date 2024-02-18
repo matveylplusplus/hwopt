@@ -251,16 +251,36 @@ def generate_prindex_table():
         c.executescript(
             """
             CREATE TEMP TABLE p_parts AS
-            SELECT assignments.assignment_name, assignments.class_name, deadvar_maps.deadline_date, CAST(lp_template_deadvar_phases.phase_value / (CAST(24*60*(julianday(datetime(COALESCE(deadvar_maps.deadline_date, lp_template_deadvar_phases.deadline_variable), '+' || (lp_template_deadvar_phases.hour_offset + COALESCE(assignments.hour_due, assignment_templates.hour_due, lp_template_deadvar_phases.hour_due)) || ' hours', '+' || COALESCE(assignments.minute_due, assignment_templates.minute_due, lp_template_deadvar_phases.minute_due) || ' minutes')) - julianday('now', 'localtime')) AS INTEGER)) AS REAL) AS p_summand
+            SELECT assignments.assignment_name, assignments.class_name, COALESCE(assignment_deadvar_maps.deadline_date, template_deadvar_maps.deadline_date), CAST(lp_template_deadvar_phases.phase_value / (CAST(24*60*(julianday(datetime(COALESCE(deadvar_maps.deadline_date, lp_template_deadvar_phases.deadline_variable), '+' || (lp_template_deadvar_phases.hour_offset + COALESCE(assignments.hour_due, assignment_templates.hour_due, lp_template_deadvar_phases.hour_due)) || ' hours', '+' || COALESCE(assignments.minute_due, assignment_templates.minute_due, lp_template_deadvar_phases.minute_due) || ' minutes')) - julianday('now', 'localtime')) AS INTEGER)) AS REAL) AS p_summand
             FROM assignments
             LEFT JOIN assignment_templates ON assignment_templates.assignment_type = assignments.template AND assignment_templates.class_name = assignments.class_name
             LEFT JOIN lp_template_deadvar_phases ON lp_template_deadvar_phases.late_policy_name = COALESCE(assignments.late_policy_name, assignment_templates.late_policy_name)
             LEFT JOIN deadvar_maps ON deadvar_maps.assignment_name = assignments.assignment_name AND deadvar_maps.class_name = assignments.class_name AND deadvar_maps.deadline_variable = lp_template_deadvar_phases.deadline_variable
             WHERE 0 < p_summand AND p_summand <= phase_value;
 
-            DELETE FROM assignments WHERE NOT EXISTS (SELECT * FROM p_parts WHERE p_parts.assignment_name = assignments.assignment_name);
+            DELETE FROM assignment_templates
+            WHERE NOT EXISTS (
+                SELECT * FROM lp_template_deadvar_phases
+                LEFT JOIN assignment_templates ON assignment_templates.late_policy_name = lp_template_deadvar_phases.late_policy_name
+                LEFT JOIN template_deadvar_maps ON template_deadvar_maps.template = assignment_templates.assignment_type AND template_deadvar_maps.class_name = assignment_templates.class_name AND template_deadvar_maps.deadvar = lp_template_deadvar_phases.deadvar
+                WHERE template_deadvar_maps.deadvar IS NULL OR CAST(julianday(datetime(template_deadvar_maps.deadline_date, '+' || template_deadvar_maps.deadline_hour || ' hours', '+' || template_deadvar_maps.deadline_min || ' minutes')) - julianday('now', 'localtime') AS INTEGER) > 0
+            );
 
-            DELETE FROM deadvar_maps WHERE NOT EXISTS (SELECT * FROM p_parts WHERE p_parts.deadline_date = deadvar_maps.deadline_date);
+            DELETE FROM assignments
+            WHERE NOT EXISTS (
+                SELECT * FROM lp_template_deadvar_phases
+                LEFT JOIN assignments ON assignments.late_policy_name = lp_template_deadvar_phases.late_policy_name
+                LEFT JOIN assignment_deadvar_maps ON assignment_deadvar_maps.assignment_name = assignments.assignment_name AND assignment_deadvar_maps.class_name = assignments.class_name AND assignment_deadvar_maps.deadvar = lp_template_deadvar_phases.deadvar
+                WHERE assignment_deadvar_maps.deadvar IS NULL OR CAST(julianday(datetime(assignment_deadvar_maps.deadline_date, '+' || assignment_deadvar_maps.deadline_hour || ' hours', '+' || assignment_deadvar_maps.deadline_min || ' minutes')) - julianday('now', 'localtime') AS INTEGER) > 0
+            );
+
+            DELETE FROM template_deadvar_maps 
+            WHERE CAST(julianday(datetime(deadline_date, '+' || deadline_hour || ' hours', '+' || deadline_min || ' minutes')) - julianday('now', 'localtime') AS INTEGER) <= 0;
+
+            DELETE FROM assignment_deadvar_maps 
+            WHERE CAST(julianday(datetime(deadline_date, '+' || deadline_hour || ' hours', '+' || deadline_min || ' minutes')) - julianday('now', 'localtime') AS INTEGER) <= 0;
+
+
 
             CREATE TEMP TABLE prindexes AS
             SELECT class_name, assignment_name, prindex, commute_factor*prindex AS cprindex
