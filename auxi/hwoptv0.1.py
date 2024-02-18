@@ -2,18 +2,20 @@
 To do ASAP:
     - Implement templated duetime
         - X change tables
-            - X lp_template_deadvar_phases
+            - X undo lp_template_deadvar_phases fuckery
             - X assignment_templates
-            - X assignments
-        - X change prindex computation
+            - X undo assignments fuckery
+            - X deadvar_maps
+        - fix prindex computation
         - change input functions
             - insert_late_policy()
             - insert assignment_template()
             - insert assignment()
         - update existing entries
-            - X lp_template_deadvar_phases
-            - X assignment_templates
-            -   assignments 
+            - X undo lp_template_deadvar_phases fuckery
+            - X undo assignment_templates fuckery
+            -  assignment_templates
+            -  deadvar_maps
 
 Future Work:
     - drop_assignment()
@@ -1006,4 +1008,9 @@ two options for point_insert()...either ask for value and quantity separately an
     - problem with asking for quantity is that it might not even be relevant...if syllabus gives you the worth of each lab assignment (eg 100pts) and user wants a lab_assignment_template they should be able to just enter 100
 
 the time at which an assignment is due could be a property of the assignment, the template, or the late policy...3 coalesces?
+
+ideal scheme: late policies can be as specific as they want, and can be overriden by assignment templates. Furthermore, assignment templates can be as specific as they want, and can be overriden by assignments. Standalone assignments can override late policies.
+
+assignments_deadvar_maps
+templates_deadvar_maps
 """

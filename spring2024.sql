@@ -50,11 +50,11 @@ VALUES('10x1', 'x0');
 INSERT INTO lp_template_deadvars
 VALUES('may13', 'x0');
 INSERT INTO lp_template_deadvars
-VALUES('may13', '2024-05-13 00:00:00');
+VALUES('may13', '2024-05-13 23:59:00');
 INSERT INTO lp_template_deadvars
 VALUES('may17', 'x0');
 INSERT INTO lp_template_deadvars
-VALUES('may17', '2024-05-17 00:00:00');
+VALUES('may17', '2024-05-17 23:59:00');
 CREATE TABLE lp_template_deadvar_phases (
     late_policy_name TEXT,
     phase_value REAL CHECK (
@@ -63,25 +63,23 @@ CREATE TABLE lp_template_deadvar_phases (
     ),
     deadline_variable TEXT,
     hour_offset INT,
-    hour_due INT,
-    minute_due INT,
     FOREIGN KEY (late_policy_name, deadline_variable) REFERENCES lp_template_deadvars (late_policy_name, deadline_variable) ON UPDATE CASCADE,
     PRIMARY KEY (late_policy_name, deadline_variable, hour_offset)
 );
 INSERT INTO lp_template_deadvar_phases
-VALUES('stand', 1.0, 'x0', 0, 23, 59);
+VALUES('stand', 1.0, 'x0', 0);
 INSERT INTO lp_template_deadvar_phases
-VALUES('10x1', 0.1, 'x0', 0, 23, 59);
+VALUES('10x1', 0.1, 'x0', 0);
 INSERT INTO lp_template_deadvar_phases
-VALUES('10x1', 0.9, 'x0', 24, 23, 59);
+VALUES('10x1', 0.9, 'x0', 24);
 INSERT INTO lp_template_deadvar_phases
-VALUES('may13', 0.05, 'x0', 0, 23, 59);
+VALUES('may13', 0.05, 'x0', 0);
 INSERT INTO lp_template_deadvar_phases
-VALUES('may13', 0.95, '2024-05-13 00:00:00', 0, 23, 59);
+VALUES('may13', 0.95, '2024-05-13 23:59:00', 0);
 INSERT INTO lp_template_deadvar_phases
-VALUES('may17', 0.05, 'x0', 0, 23, 59);
+VALUES('may17', 0.05, 'x0', 0);
 INSERT INTO lp_template_deadvar_phases
-VALUES('may17', 0.95, '2024-05-17 00:00:00', 0, 23, 59);
+VALUES('may17', 0.95, '2024-05-17 23:59:00', 0);
 CREATE TABLE assignment_templates (
     assignment_type TEXT,
     class_name TEXT,
@@ -91,48 +89,44 @@ CREATE TABLE assignment_templates (
         0 <= commute_factor
         AND commute_factor <= 1
     ),
-    hour_due INT,
-    minute_due INT,
+    deadline_hour INT,
+    deadline_min INT,
     FOREIGN KEY (class_name) REFERENCES classes (class_name) ON UPDATE CASCADE,
     FOREIGN KEY (late_policy_name) REFERENCES lp_templates (late_policy_name) ON UPDATE CASCADE,
     PRIMARY KEY (assignment_type, class_name)
 );
 INSERT INTO assignment_templates
-VALUES('proj', 'cmsc330', NULL, '10x1', 0.6, NULL, NULL);
+VALUES('proj', 'cmsc330', NULL, '10x1', 0.6);
 INSERT INTO assignment_templates
 VALUES(
         'hw',
         'cmsc351',
         11.111111111111111604,
         'stand',
-        0.25,
-        NULL,
-        NULL
+        0.25
     );
 INSERT INTO assignment_templates
-VALUES('midterm', 'cmsc351', 100.0, 'stand', 0.1, 9, 55);
+VALUES('midterm', 'cmsc351', 100.0, 'stand', 0.1);
 INSERT INTO assignment_templates
 VALUES(
         'hw',
         'stat410',
         5.555555555555559799,
         'stand',
-        0.25,
-        NULL,
-        NULL
+        0.25
     );
 INSERT INTO assignment_templates
-VALUES('midterm', 'stat410', 15.0, 'stand', 0.1, 10, 55);
+VALUES('midterm', 'stat410', 15.0, 'stand', 0.1);
 INSERT INTO assignment_templates
-VALUES('midterm', 'cmsc330', 12.0, 'stand', 0.1, 9, 25);
+VALUES('midterm', 'cmsc330', 12.0, 'stand', 0.1);
 INSERT INTO assignment_templates
-VALUES('ws', 'psyc100', NULL, 'may13', 0.0, NULL, NULL);
+VALUES('ws', 'psyc100', NULL, 'may13', 0.0);
 INSERT INTO assignment_templates
-VALUES('quiz', 'cmsc330', 2.5, 'stand', 0.1, 11, 55);
+VALUES('quiz', 'cmsc330', 2.5, 'stand', 0.1);
 INSERT INTO assignment_templates
-VALUES('sa', 'psyc100', 50.0, 'may17', 0.1, NULL, NULL);
+VALUES('sa', 'psyc100', 50.0, 'may17', 0.1);
 INSERT INTO assignment_templates
-VALUES('midterm', 'psyc100', 75.0, 'stand', 0.1, 22, 45);
+VALUES('midterm', 'psyc100', 75.0, 'stand', 0.1);
 CREATE TABLE assignments (
     assignment_name TEXT,
     class_name TEXT,
@@ -142,8 +136,6 @@ CREATE TABLE assignments (
         0 <= commute_factor
         AND commute_factor <= 1
     ),
-    hour_due INT,
-    minute_due INT,
     template TEXT,
     FOREIGN KEY (class_name) REFERENCES classes (class_name) ON UPDATE CASCADE,
     FOREIGN KEY (late_policy_name) REFERENCES lp_templates (late_policy_name) ON UPDATE CASCADE,
@@ -208,7 +200,9 @@ CREATE TABLE deadvar_maps (
     assignment_name TEXT,
     class_name TEXT,
     deadline_variable TEXT,
-    deadline_instance TEXT NOT NULL,
+    deadline_date TEXT NOT NULL,
+    deadline_hour INT,
+    deadline_min INT,
     FOREIGN KEY (assignment_name, class_name) REFERENCES assignments (assignment_name, class_name) ON DELETE CASCADE,
     PRIMARY KEY (
         assignment_name,
