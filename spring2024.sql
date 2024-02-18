@@ -50,11 +50,11 @@ VALUES('10x1', 'x0');
 INSERT INTO lp_template_deadvars
 VALUES('may13', 'x0');
 INSERT INTO lp_template_deadvars
-VALUES('may13', '2024-05-13 23:59:00');
+VALUES('may13', '2024-05-13 00:00:00');
 INSERT INTO lp_template_deadvars
 VALUES('may17', 'x0');
 INSERT INTO lp_template_deadvars
-VALUES('may17', '2024-05-17 23:59:00');
+VALUES('may17', '2024-05-17 00:00:00');
 CREATE TABLE lp_template_deadvar_phases (
     late_policy_name TEXT,
     phase_value REAL CHECK (
@@ -69,19 +69,19 @@ CREATE TABLE lp_template_deadvar_phases (
     PRIMARY KEY (late_policy_name, deadline_variable, hour_offset)
 );
 INSERT INTO lp_template_deadvar_phases
-VALUES('stand', 1.0, 'x0', 0);
+VALUES('stand', 1.0, 'x0', 0, 23, 59);
 INSERT INTO lp_template_deadvar_phases
-VALUES('10x1', 0.1, 'x0', 0);
+VALUES('10x1', 0.1, 'x0', 0, 23, 59);
 INSERT INTO lp_template_deadvar_phases
-VALUES('10x1', 0.9, 'x0', 24);
+VALUES('10x1', 0.9, 'x0', 24, 23, 59);
 INSERT INTO lp_template_deadvar_phases
-VALUES('may13', 0.05, 'x0', 0);
+VALUES('may13', 0.05, 'x0', 0, 23, 59);
 INSERT INTO lp_template_deadvar_phases
-VALUES('may13', 0.95, '2024-05-13 23:59:00', 0);
+VALUES('may13', 0.95, '2024-05-13 00:00:00', 0, 23, 59);
 INSERT INTO lp_template_deadvar_phases
-VALUES('may17', 0.05, 'x0', 0);
+VALUES('may17', 0.05, 'x0', 0, 23, 59);
 INSERT INTO lp_template_deadvar_phases
-VALUES('may17', 0.95, '2024-05-17 23:59:00', 0);
+VALUES('may17', 0.95, '2024-05-17 00:00:00', 0, 23, 59);
 CREATE TABLE assignment_templates (
     assignment_type TEXT,
     class_name TEXT,
@@ -98,31 +98,41 @@ CREATE TABLE assignment_templates (
     PRIMARY KEY (assignment_type, class_name)
 );
 INSERT INTO assignment_templates
-VALUES('proj', 'cmsc330', NULL, '10x1', 0.6);
+VALUES('proj', 'cmsc330', NULL, '10x1', 0.6, NULL, NULL);
 INSERT INTO assignment_templates
 VALUES(
         'hw',
         'cmsc351',
         11.111111111111111604,
         'stand',
-        0.25
+        0.25,
+        NULL,
+        NULL
     );
 INSERT INTO assignment_templates
-VALUES('midterm', 'cmsc351', 100.0, 'stand', 0.1);
+VALUES('midterm', 'cmsc351', 100.0, 'stand', 0.1, 9, 55);
 INSERT INTO assignment_templates
-VALUES('hw', 'stat410', 5.555555555555559799, 'stand', 0.25);
+VALUES(
+        'hw',
+        'stat410',
+        5.555555555555559799,
+        'stand',
+        0.25,
+        NULL,
+        NULL
+    );
 INSERT INTO assignment_templates
-VALUES('midterm', 'stat410', 15.0, 'stand', 0.1);
+VALUES('midterm', 'stat410', 15.0, 'stand', 0.1, 10, 55);
 INSERT INTO assignment_templates
-VALUES('midterm', 'cmsc330', 12.0, 'stand', 0.1);
+VALUES('midterm', 'cmsc330', 12.0, 'stand', 0.1, 9, 25);
 INSERT INTO assignment_templates
-VALUES('ws', 'psyc100', NULL, 'may13', 0.0);
+VALUES('ws', 'psyc100', NULL, 'may13', 0.0, NULL, NULL);
 INSERT INTO assignment_templates
-VALUES('quiz', 'cmsc330', 2.5, 'stand', 0.1);
+VALUES('quiz', 'cmsc330', 2.5, 'stand', 0.1, 11, 55);
 INSERT INTO assignment_templates
-VALUES('sa', 'psyc100', 50.0, 'may17', 0.1);
+VALUES('sa', 'psyc100', 50.0, 'may17', 0.1, NULL, NULL);
 INSERT INTO assignment_templates
-VALUES('midterm', 'psyc100', 75.0, 'stand', 0.1);
+VALUES('midterm', 'psyc100', 75.0, 'stand', 0.1, 22, 45);
 CREATE TABLE assignments (
     assignment_name TEXT,
     class_name TEXT,
@@ -147,13 +157,34 @@ VALUES('proj1', 'cmsc330', 30.0, 'stand', NULL, 'proj');
 INSERT INTO assignments
 VALUES('hw3', 'stat410', NULL, NULL, NULL, 'hw');
 INSERT INTO assignments
-VALUES('midterm1', 'stat410', NULL, NULL, NULL, 'midterm');
+VALUES(
+        'midterm1',
+        'stat410',
+        NULL,
+        NULL,
+        NULL,
+        'midterm'
+    );
 INSERT INTO assignments
 VALUES('ws-03', 'psyc100', 38.0, NULL, NULL, 'ws');
 INSERT INTO assignments
-VALUES('midterm1', 'cmsc330', NULL, NULL, NULL, 'midterm');
+VALUES(
+        'midterm1',
+        'cmsc330',
+        NULL,
+        NULL,
+        NULL,
+        'midterm'
+    );
 INSERT INTO assignments
-VALUES('midterm2', 'cmsc351', NULL, NULL, NULL, 'midterm');
+VALUES(
+        'midterm2',
+        'cmsc351',
+        NULL,
+        NULL,
+        NULL,
+        'midterm'
+    );
 INSERT INTO assignments
 VALUES('quiz2', 'cmsc330', NULL, NULL, NULL, 'quiz');
 INSERT INTO assignments
@@ -161,7 +192,14 @@ VALUES('sa-01', 'psyc100', NULL, NULL, NULL, 'sa');
 INSERT INTO assignments
 VALUES('ws-04', 'psyc100', 34.0, NULL, NULL, 'ws');
 INSERT INTO assignments
-VALUES('midterm1', 'psyc100', NULL, NULL, NULL, 'midterm');
+VALUES(
+        'midterm1',
+        'psyc100',
+        NULL,
+        NULL,
+        NULL,
+        'midterm'
+    );
 INSERT INTO assignments
 VALUES('sa-02', 'psyc100', NULL, NULL, NULL, 'sa');
 INSERT INTO assignments
@@ -185,15 +223,35 @@ VALUES('proj1', 'cmsc330', 'x0', '2024-05-10 23:59:00');
 INSERT INTO deadvar_maps
 VALUES('hw3', 'stat410', 'x0', '2024-02-23 23:59:00');
 INSERT INTO deadvar_maps
-VALUES('midterm1', 'stat410', 'x0', '2024-02-28 10:55:00');
+VALUES(
+        'midterm1',
+        'stat410',
+        'x0',
+        '2024-02-28 10:55:00'
+    );
 INSERT INTO deadvar_maps
-VALUES('midterm1', 'cmsc330', 'x0', '2024-03-05 09:25:00');
+VALUES(
+        'midterm1',
+        'cmsc330',
+        'x0',
+        '2024-03-05 09:25:00'
+    );
 INSERT INTO deadvar_maps
-VALUES('midterm2', 'cmsc351', 'x0', '2024-03-13 09:55:00');
+VALUES(
+        'midterm2',
+        'cmsc351',
+        'x0',
+        '2024-03-13 09:55:00'
+    );
 INSERT INTO deadvar_maps
 VALUES('quiz2', 'cmsc330', 'x0', '2024-02-23 11:55:00');
 INSERT INTO deadvar_maps
-VALUES('midterm1', 'psyc100', 'x0', '2024-02-29 22:49:00');
+VALUES(
+        'midterm1',
+        'psyc100',
+        'x0',
+        '2024-02-29 22:49:00'
+    );
 INSERT INTO deadvar_maps
 VALUES('sa-02', 'psyc100', 'x0', '2024-02-23 23:59:00');
 INSERT INTO deadvar_maps

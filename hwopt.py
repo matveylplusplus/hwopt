@@ -251,7 +251,7 @@ def generate_prindex_table():
         c.executescript(
             """
             CREATE TEMP TABLE p_parts AS
-            SELECT assignments.assignment_name, assignments.class_name, deadvar_maps.deadline_instance, CAST(lp_template_deadvar_phases.phase_value / (CAST(24*60*(julianday(datetime(COALESCE(deadvar_maps.deadline_instance, lp_template_deadvar_phases.deadline_variable), '+' || lp_template_deadvar_phases.hour_offset || ' hours')) - julianday('now', 'localtime')) AS INTEGER)) AS REAL) AS p_summand
+            SELECT assignments.assignment_name, assignments.class_name, deadvar_maps.deadline_instance, CAST(lp_template_deadvar_phases.phase_value / (CAST(24*60*(julianday(datetime(COALESCE(deadvar_maps.deadline_instance, lp_template_deadvar_phases.deadline_variable), '+' || (lp_template_deadvar_phases.hour_offset + COALESCE(assignments.hour_due, assignment_templates.hour_due, lp_template_deadvar_phases.hour_due)) || ' hours', '+' || COALESCE(assignments.minute_due, assignment_templates.minute_due, lp_template_deadvar_phases.minute_due) || ' minutes')) - julianday('now', 'localtime')) AS INTEGER)) AS REAL) AS p_summand
             FROM assignments
             LEFT JOIN assignment_templates ON assignment_templates.assignment_type = assignments.template AND assignment_templates.class_name = assignments.class_name
             LEFT JOIN lp_template_deadvar_phases ON lp_template_deadvar_phases.late_policy_name = COALESCE(assignments.late_policy_name, assignment_templates.late_policy_name)

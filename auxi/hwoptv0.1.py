@@ -1,19 +1,19 @@
 """
 To do ASAP:
     - Implement templated duetime
-        - change tables
-            - lp_template_deadvar_phases
-            - assignment_templates 
-            - assignments
-        - change prindex computation
+        - X change tables
+            - X lp_template_deadvar_phases
+            - X assignment_templates
+            - X assignments
+        - X change prindex computation
         - change input functions
             - insert_late_policy()
             - insert assignment_template()
             - insert assignment()
         - update existing entries
-            - lp_template_deadvar_phases
-            - assignment_templates 
-            - assignments 
+            - X lp_template_deadvar_phases
+            - X assignment_templates
+            -   assignments 
 
 Future Work:
     - drop_assignment()
