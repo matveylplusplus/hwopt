@@ -30,6 +30,7 @@ Future Work:
         - instead of opening and closing the database connection 3 times (by calling store() 3 times), could we generalize store() to allow us to open the connection just once, insert everything we need into all 3 tables, and then close the connection?
         - the code is hard to read
         - cohesion could be improved, as processing of input is mish-mashed with providing the input itself...although certainly not out of a lack of trying; the input the user gives directly determines what input we should ask for, so we can't just split it into input() and process()
+    - Templating the due date's time of day (eg 11:59PM) 
 """
 
 import pandas as pd

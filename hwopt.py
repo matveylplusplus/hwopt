@@ -19,10 +19,9 @@ def store(table_name: str, entry_tuple_list: list[tuple[str]]):
         c = conn.cursor()
         print("Inserting shit...")
         c.executemany(
-            f"INSERT OR IGNORE INTO {table_name} VALUES ({qstring})",
+            f"INSERT INTO {table_name} VALUES ({qstring})",
             entry_tuple_list,
         )
-        # OR IGNORE makes sure that we don't crash if user enters an entry that duplicates another entry's primary key (sqlite just doesn't enter it)
     conn.close()
     print("Done!")
 
@@ -106,7 +105,11 @@ def insert_late_policy():
 
 
 def null_sieve(input_str: str):
-    return None if input_str == "n/a" else input_str
+    return (
+        None
+        if (input_str == "n/a" or input_str == "" or input_str == "NULL")
+        else input_str
+    )
 
 
 def insert_assignment_template():
@@ -121,7 +124,7 @@ def insert_assignment_template():
         split_frac = points.split("/")
         points = str(Decimal(int(split_frac[0])) / Decimal(int(split_frac[1])))
     late_policy = null_sieve(input(f"{format_str}late policy: "))
-    commute_factor = null_sieve(input(f"{format_str}commute factor: "))
+    commute_factor = null_sieve(float(input(f"{format_str}commute factor: ")))
 
     store(
         "assignment_templates",
@@ -248,25 +251,27 @@ def generate_prindex_table():
         c.executescript(
             """
             CREATE TEMP TABLE p_parts AS
-            SELECT assignments.assignment_name, CAST(lp_template_deadvar_phases.phase_value / (CAST(24*60*(julianday(datetime(deadvar_maps.deadline_instance, '+' || lp_template_deadvar_phases.hour_offset || ' hours')) - julianday('now', 'localtime')) AS INTEGER)) AS REAL) AS p_summand
+            SELECT assignments.assignment_name, assignments.class_name, deadvar_maps.deadline_instance, CAST(lp_template_deadvar_phases.phase_value / (CAST(24*60*(julianday(datetime(COALESCE(deadvar_maps.deadline_instance, lp_template_deadvar_phases.deadline_variable), '+' || lp_template_deadvar_phases.hour_offset || ' hours')) - julianday('now', 'localtime')) AS INTEGER)) AS REAL) AS p_summand
             FROM assignments
-            INNER JOIN deadvar_maps ON deadvar_maps.assignment_name = assignments.assignment_name AND deadvar_maps.class_name = assignments.class_name
             LEFT JOIN assignment_templates ON assignment_templates.assignment_type = assignments.template AND assignment_templates.class_name = assignments.class_name
             LEFT JOIN lp_template_deadvar_phases ON lp_template_deadvar_phases.late_policy_name = COALESCE(assignments.late_policy_name, assignment_templates.late_policy_name)
+            LEFT JOIN deadvar_maps ON deadvar_maps.assignment_name = assignments.assignment_name AND deadvar_maps.class_name = assignments.class_name AND deadvar_maps.deadline_variable = lp_template_deadvar_phases.deadline_variable
             WHERE 0 < p_summand AND p_summand <= phase_value;
 
             DELETE FROM assignments WHERE NOT EXISTS (SELECT * FROM p_parts WHERE p_parts.assignment_name = assignments.assignment_name);
+
+            DELETE FROM deadvar_maps WHERE NOT EXISTS (SELECT * FROM p_parts WHERE p_parts.deadline_instance = deadvar_maps.deadline_instance);
 
             CREATE TEMP TABLE prindexes AS
             SELECT class_name, assignment_name, prindex, commute_factor*prindex AS cprindex
             FROM (
                 SELECT assignments.assignment_name, assignments.class_name, major_maps.major_factor*COALESCE(assignments.points, assignment_templates.points)*(1.0/classes.total_class_points)*(SUM(p_parts.p_summand))*100000.0 as prindex, COALESCE(assignments.commute_factor, assignment_templates.commute_factor) AS commute_factor
                 FROM p_parts
-                INNER JOIN assignments ON assignments.assignment_name = p_parts.assignment_name
+                INNER JOIN assignments ON assignments.assignment_name = p_parts.assignment_name AND assignments.class_name = p_parts.class_name
                 LEFT JOIN assignment_templates ON assignment_templates.assignment_type = assignments.template AND assignment_templates.class_name = assignments.class_name
-                INNER JOIN classes ON classes.class_name = COALESCE(assignments.class_name, assignment_templates.class_name)
+                INNER JOIN classes ON classes.class_name = assignments.class_name
                 INNER JOIN major_maps ON major_maps.major_state = classes.major_state
-                GROUP BY assignments.assignment_name
+                GROUP BY assignments.assignment_name, assignments.class_name
                 );
         """
         )

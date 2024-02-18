@@ -38,7 +38,7 @@ CREATE TABLE IF NOT EXISTS assignment_templates (
     points REAL,
     late_policy_name TEXT,
     commute_factor REAL CHECK (
-        0 < commute_factor
+        0 <= commute_factor
         AND commute_factor <= 1
     ),
     FOREIGN KEY (class_name) REFERENCES classes (class_name) ON UPDATE CASCADE,
@@ -51,7 +51,7 @@ CREATE TABLE IF NOT EXISTS assignments (
     points REAL,
     late_policy_name TEXT,
     commute_factor REAL CHECK (
-        0 < commute_factor
+        0 <= commute_factor
         AND commute_factor <= 1
     ),
     template TEXT,
