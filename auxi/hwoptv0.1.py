@@ -1029,4 +1029,9 @@ WHERE CAST(julianday(datetime(deadline_date, '+' || deadline_hour || ' hours', '
 DELETE FROM assignment_deadvar_maps 
 WHERE CAST(julianday(datetime(deadline_date, '+' || deadline_hour || ' hours', '+' || deadline_min || ' minutes')) - julianday('now', 'localtime') AS INTEGER) <= 0;
 
+SELECT template_deadvar_maps.deadline_date, template_deadvar_maps.deadline_hour
+FROM assignment_templates
+INNER JOIN lp_template_deadvar_phases ON lp_template_deadvar_phases.late_policy_name = assignment_templates.late_policy_name
+LEFT JOIN template_deadvar_maps ON template_deadvar_maps.deadvar = lp_template_deadvar_phases.deadvar AND template_deadvar_maps.template = assignment_templates.assignment_type AND template_deadvar_maps.class_name = assignment_templates.class_name
+WHERE assignment_templates.assignment_type = ? AND assignment_templates.class_name = ?
 """

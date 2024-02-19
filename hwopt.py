@@ -238,16 +238,14 @@ def insert_assignment():
     template_excerpt2 = [(None, None)] * len(distinct_deadvars)
     # if the assignment uses a template and doesn't override its late policy...
     # (the template is assumed to be using a late policy in this case)
-    if template is not None and lp_checklist[0] is None:
+    if template is not None:
         with conn:
             c = conn.cursor()
             c.execute(
                 """
-                SELECT template_deadvar_maps.deadline_date, template_deadvar_maps.deadline_hour
-                FROM assignment_templates
-                INNER JOIN lp_template_deadvar_phases ON lp_template_deadvar_phases.late_policy_name = assignment_templates.late_policy_name
-                LEFT JOIN template_deadvar_maps ON template_deadvar_maps.deadvar = lp_template_deadvar_phases.deadvar AND template_deadvar_maps.template = assignment_templates.assignment_type AND template_deadvar_maps.class_name = assignment_templates.class_name
-                WHERE assignment_templates.assignment_type = ? AND assignment_templates.class_name = ?
+                SELECT deadline_date, deadline_hour
+                FROM template_deadvar_maps
+                WHERE template_deadvar_maps.template = ? AND template_deadvar_maps.class_name = ?
                 """,
                 (template, class_name),
             )
