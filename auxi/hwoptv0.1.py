@@ -5,10 +5,10 @@ To do ASAP:
             - X assignment_deadvar_maps
             - X template_deadvar_maps
             - X lp_template_deadvar_phases
-        - fix prindex computation
-        - cleanup funct
+        - X fix prindex computation
+        - X cleanup funct
         - change input functions
-            - insert_late_policy()
+            - X insert_late_policy()
             - insert assignment_template()
             - insert assignment()
 

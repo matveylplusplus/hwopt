@@ -48,41 +48,31 @@ def insert_late_policy():
     # init
     phase_list = []
     deadvar_list = []
-    deadline_count_pairs = []
+    deadline_counts = []
     prev_deduct = Decimal(0)
 
     # input
-    varcount = 0
+    deadvar_count = 0
     print("\nProvide the following information (or hit Ctrl+C to exit)...")
     policy_name = input(" - policy name: ")
     independent_deadlines_count = int(input(" - # of independent deadlines: "))
     for i in range(independent_deadlines_count):
-        deadvar = input(f"   - deadline variable {i+1}: ")
-        try:
-            # if you're giving a concrete date, let the parser interpret it and paste it in a nice format
-            deadvar = str(parser.parse(deadvar))
-        except parser.ParserError:
-            # if user does not provide a concrete date, then their input is taken to be a variable
-            deadvar = f"x{varcount}"
-            varcount += 1
-        deadvar_list.append((policy_name, deadvar))
+        deadvar_list.append((policy_name, deadvar_count))
         deadline_count = int(
-            input(f"   - # of phases dependent on {deadvar}: ")
+            input(f"   - # of phases dependent on deadvar {deadvar_count}: ")
         )
-        deadline_count_pairs.append((deadvar, deadline_count))
-    for i in range(len(deadline_count_pairs)):
+        deadline_counts.append(deadline_count)
+        deadvar_count += 1
+    for i in range(len(deadline_counts)):
         # for formatting
-        if i != 1 and deadline_count_pairs[i][1] > 1:
-            print(f" - {deadline_count_pairs[i][0]} -")
-        for j in range(deadline_count_pairs[i][1]):
+        if i != 1 and deadline_counts[i] > 1:
+            print(f" - deadvar {i} -")
+        for j in range(deadline_counts[i]):
             deduct = Decimal(1)
             hour_offset = 0
             if j != 0:
                 hour_offset = int(input(f"   - hour offset {j}: "))
-            if (
-                i != len(deadline_count_pairs) - 1
-                or j != deadline_count_pairs[i][1] - 1
-            ):
+            if i != len(deadline_counts) - 1 or j != deadline_counts[i] - 1:
                 deduct = Decimal(
                     input(f"   - pct deduction {j+1} (from original grade): ")
                 ) / Decimal(100)
@@ -93,7 +83,7 @@ def insert_late_policy():
                 (
                     policy_name,
                     str(deduct - prev_deduct),
-                    deadline_count_pairs[i][0],
+                    i,
                     hour_offset,
                 )
             )
@@ -250,14 +240,6 @@ def generate_prindex_table():
         c = conn.cursor()
         c.executescript(
             """
-            CREATE TEMP TABLE p_parts AS
-            SELECT assignments.assignment_name, assignments.class_name, COALESCE(assignment_deadvar_maps.deadline_date, template_deadvar_maps.deadline_date), CAST(lp_template_deadvar_phases.phase_value / (CAST(24*60*(julianday(datetime(COALESCE(assignment_deadvar_maps.deadline_date, template_deadvar_maps.deadline_date), '+' || (lp_template_deadvar_phases.hour_offset + COALESCE(assignment_deadvar_maps.deadline_hour, template_deadvar_maps.deadline_hour)) || ' hours', '+' || COALESCE(assignment_deadvar_maps.deadline_min, template_deadvar_maps.deadline_min) || ' minutes')) - julianday('now', 'localtime')) AS INTEGER)) AS REAL) AS p_summand
-            FROM assignments
-            LEFT JOIN assignment_templates ON assignment_templates.assignment_type = assignments.template AND assignment_templates.class_name = assignments.class_name
-            LEFT JOIN lp_template_deadvar_phases ON lp_template_deadvar_phases.late_policy_name = COALESCE(assignments.late_policy_name, assignment_templates.late_policy_name)
-            LEFT JOIN assignment_deadvar_maps ON assignment_deadvar_maps.assignment_name = assignments.assignment_name AND assignment_deadvar_maps.class_name = assignments.class_name AND assignment_deadvar_maps.deadvar = lp_template_deadvar_phases.deadvar
-            WHERE 0 < p_summand AND p_summand <= phase_value;
-
             DELETE FROM assignment_templates
             WHERE NOT EXISTS (
                 SELECT * FROM lp_template_deadvar_phases
@@ -273,8 +255,17 @@ def generate_prindex_table():
                 LEFT JOIN assignment_deadvar_maps ON assignment_deadvar_maps.assignment_name = assignments.assignment_name AND assignment_deadvar_maps.class_name = assignments.class_name AND assignment_deadvar_maps.deadvar = lp_template_deadvar_phases.deadvar
                 LEFT JOIN assignment_templates ON assignment_templates.assignment_type = assignments.template AND assignment_templates.class_name = assignments.class_name
                 LEFT JOIN template_deadvar_maps ON template_deadvar_maps.template = assignment_templates.assignment_type AND template_deadvar_maps.class_name = assignment_templates.class_name AND template_deadvar_maps.deadvar = lp_template_deadvar_phases.deadvar
-                WHERE COALESCE(assignment_deadvar_maps.deadvar, template_deadvar_maps.deadvar) IS NULL OR CAST(julianday(datetime(COALESCE(assignment_deadvar_maps.deadline_date, assignment_templates.deadline_date), '+' || COALESCE(assignment_deadvar_maps.deadline_hour, template_deadvar_maps.deadline_hour) || ' hours', '+' || COALESCE(assignment_deadvar_maps.deadline_min, template_deadvar_maps.deadline_min) || ' minutes')) - julianday('now', 'localtime') AS INTEGER) > 0
+                WHERE COALESCE(assignment_deadvar_maps.deadvar, template_deadvar_maps.deadvar) IS NULL OR CAST(julianday(datetime(COALESCE(assignment_deadvar_maps.deadline_date, template_deadvar_maps.deadline_date), '+' || COALESCE(assignment_deadvar_maps.deadline_hour, template_deadvar_maps.deadline_hour) || ' hours', '+' || COALESCE(assignment_deadvar_maps.deadline_min, template_deadvar_maps.deadline_min) || ' minutes')) - julianday('now', 'localtime') AS INTEGER) > 0
             );
+    
+            CREATE TEMP TABLE p_parts AS
+            SELECT assignments.assignment_name, assignments.class_name, COALESCE(assignment_deadvar_maps.deadline_date, template_deadvar_maps.deadline_date), CAST(lp_template_deadvar_phases.phase_value / (CAST(24*60*(julianday(datetime(COALESCE(assignment_deadvar_maps.deadline_date, template_deadvar_maps.deadline_date), '+' || (lp_template_deadvar_phases.hour_offset + COALESCE(assignment_deadvar_maps.deadline_hour, template_deadvar_maps.deadline_hour)) || ' hours', '+' || COALESCE(assignment_deadvar_maps.deadline_min, template_deadvar_maps.deadline_min) || ' minutes')) - julianday('now', 'localtime')) AS INTEGER)) AS REAL) AS p_summand
+            FROM assignments
+            LEFT JOIN assignment_templates ON assignment_templates.assignment_type = assignments.template AND assignment_templates.class_name = assignments.class_name
+            LEFT JOIN lp_template_deadvar_phases ON lp_template_deadvar_phases.late_policy_name = COALESCE(assignments.late_policy_name, assignment_templates.late_policy_name)
+            LEFT JOIN assignment_deadvar_maps ON assignment_deadvar_maps.assignment_name = assignments.assignment_name AND assignment_deadvar_maps.class_name = assignments.class_name AND assignment_deadvar_maps.deadvar = lp_template_deadvar_phases.deadvar
+            LEFT JOIN template_deadvar_maps ON template_deadvar_maps.template = assignment_templates.assignment_type AND template_deadvar_maps.class_name = assignment_templates.class_name AND template_deadvar_maps.deadvar = lp_template_deadvar_phases.deadvar
+            WHERE 0 < p_summand AND p_summand <= phase_value;
 
             CREATE TEMP TABLE prindexes AS
             SELECT class_name, assignment_name, prindex, commute_factor*prindex AS cprindex
