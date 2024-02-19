@@ -143,27 +143,31 @@ def insert_assignment_template():
 
             # if user has a non-null entry for deadvar_date or deadvar_time...
             if deadvar_date is not None or deadvar_time is not None:
+                hour = None
+                minute = None
+
                 # if the string cannot be parsed it's user's fault
-                processed_date = (
+                date = (
                     str(parser.parse(deadvar_date))
                     if deadvar_date is not None
                     else deadvar_date
                 )
 
-                processed_time = (
-                    parser.parse(deadvar_time)
-                    if deadvar_time is not None
-                    else deadvar_time
-                )
+                try:
+                    parsed_time = parser.parse(deadvar_time)
+                    hour = str(parsed_time.hour)
+                    minute = str(parsed_time.minute)
+                except (TypeError, parser.ParserError):
+                    pass
 
                 deadvar_map_entries.append(
                     (
                         assignment_type,
                         class_name,
                         i,
-                        processed_date,
-                        processed_time.hour,
-                        processed_time.min,
+                        date,
+                        hour,
+                        minute,
                     )
                 )
 
@@ -231,7 +235,7 @@ def insert_assignment():
         )
         distinct_deadvars = c.fetchall()
 
-    template_excerpt2 = [None] * len(distinct_deadvars)
+    template_excerpt2 = [(None, None)] * len(distinct_deadvars)
     # if the assignment uses a template and doesn't override its late policy...
     # (the template is assumed to be using a late policy in this case)
     if template is not None and lp_checklist[0] is None:
@@ -239,7 +243,7 @@ def insert_assignment():
             c = conn.cursor()
             c.execute(
                 """
-                SELECT template_deadvar_maps.deadvar
+                SELECT template_deadvar_maps.deadline_date, template_deadvar_maps.deadline_hour
                 FROM assignment_templates
                 INNER JOIN lp_template_deadvar_phases ON lp_template_deadvar_phases.late_policy_name = assignment_templates.late_policy_name
                 LEFT JOIN template_deadvar_maps ON template_deadvar_maps.deadvar = lp_template_deadvar_phases.deadvar AND template_deadvar_maps.template = assignment_templates.assignment_type AND template_deadvar_maps.class_name = assignment_templates.class_name
@@ -247,6 +251,7 @@ def insert_assignment():
                 """,
                 (template, class_name),
             )
+            template_excerpt2 = c.fetchall()
     conn.close()
 
     deadvar_map_entries = []
@@ -254,38 +259,49 @@ def insert_assignment():
     for i in range(len(distinct_deadvars)):
         """add override message iff the template already has a mapping for that deadvar"""
         post_str = (
-            " (overriding template)" if template_excerpt2[i] is not None else ""
+            " (overriding template)"
+            if template_excerpt2[i][0] is not None
+            else ""
         )
         deadvar_date = null_sieve(
-            input(f"  {format_str}deadvar {i} date {post_str}: ")
+            input(f"  {format_str}deadvar {i} date{post_str}: ")
+        )
+
+        post_str = (
+            " (overriding template)"
+            if template_excerpt2[i][1] is not None
+            else ""
         )
         deadvar_time = null_sieve(
-            input(f"  {format_str}deadvar {i} time {post_str}: ")
+            input(f"  {format_str}deadvar {i} time{post_str}: ")
         )
 
         # if user has a non-null entry for deadvar_date or deadvar_time...
         if deadvar_date is not None or deadvar_time is not None:
+            hour = None
+            minute = None
             # if the string cannot be parsed it's user's fault
-            processed_date = (
+            date = (
                 str(parser.parse(deadvar_date))
                 if deadvar_date is not None
                 else deadvar_date
             )
 
-            processed_time = (
-                parser.parse(deadvar_time)
-                if deadvar_time is not None
-                else deadvar_time
-            )
+            try:
+                parsed_time = parser.parse(deadvar_time)
+                hour = str(parsed_time.hour)
+                minute = str(parsed_time.minute)
+            except (TypeError, parser.ParserError):
+                pass
 
             deadvar_map_entries.append(
                 (
                     assignment_name,
                     class_name,
                     i,
-                    processed_date,
-                    processed_time.hour,
-                    processed_time.min,
+                    date,
+                    hour,
+                    minute,
                 )
             )
     store(
