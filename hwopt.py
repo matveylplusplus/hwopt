@@ -398,30 +398,58 @@ def generate_prindex_table():
             print(" - (Ctrl+C) gtfoo")
             sort = input()
             if sort == "1":
-                print("\n-----------------------------------------------------")
-                print(
-                    pd.read_sql_query(
-                        "SELECT * FROM prindexes ORDER BY prindex DESC", conn
-                    ).to_string(index=False)
+                pretty_print(
+                    "SELECT * FROM prindexes ORDER BY prindex DESC", conn
                 )
-                print("-----------------------------------------------------")
             elif sort == "2":
-                print("\n-----------------------------------------------------")
-                print(
-                    pd.read_sql_query(
-                        "SELECT * FROM prindexes ORDER BY cprindex DESC", conn
-                    ).to_string(index=False)
+                pretty_print(
+                    "SELECT * FROM prindexes ORDER BY cprindex DESC", conn
                 )
-                print("-----------------------------------------------------")
 
     except KeyboardInterrupt:
         conn.close()
+
+
+def pretty_print(query: str, conn: sqlite3.Connection):
+    print("\n-----------------------------------------------------")
+    print(pd.read_sql_query(query, conn).to_string(index=False))
+    print("-----------------------------------------------------")
+
+
+def view_loop():
+    try:
+        while True:
+            print("\nWhich table would you like to view?")
+            table_list = [
+                "Classes",
+                "Late Policies",
+                "Assignment Templates",
+                "Assignments",
+            ]
+            dbtable_list = [
+                "classes",
+                "lp_templates",
+                "assignment_templates",
+                "assignments",
+            ]
+
+            for i in range(len(table_list)):
+                print(f" - ({i+1}) {table_list[i]}")
+            print(" - (Ctrl+C) please. i miss my family")
+            pick = int(input())
+
+            conn = connect_to_db()
+            pretty_print(f"SELECT * FROM {dbtable_list[pick-1]};", conn)
+
+    except KeyboardInterrupt:
+        pass
 
 
 def get_menu_input() -> str:
     print("\nhwopt welcomes you. What would you like to do with hwopt?")
     print(" - (1) Generate prindex")
     print(" - (2) Insert into hwopt")
+    print(" - (3) View tables")
     print(" - (Ctrl+C) Quit hwopt")
     return input()
 
@@ -431,6 +459,8 @@ def process_menu_input(pick: str) -> int:
         generate_prindex_table()
     elif pick == "2":
         insert_loop()
+    elif pick == "3":
+        view_loop()
     else:
         return 0
     return 1
