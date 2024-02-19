@@ -116,6 +116,22 @@ def insert_assignment_template():
     late_policy = null_sieve(input(f"{format_str}late policy: "))
     commute_factor = null_sieve(float(input(f"{format_str}commute factor: ")))
 
+    if late_policy is not None:
+        conn = connect_to_db()
+        with conn:
+            c = conn.cursor()
+            c.execute(
+                """
+                SELECT DISTINCT deadline_variable 
+                FROM lp_template_deadvar_phases
+                WHERE late_policy_name = ?
+                """,
+                (late_policy,),
+            )
+            distinct_deadvars = c.fetchall()
+
+        conn.close()
+
     store(
         "assignment_templates",
         [(assignment_type, class_name, points, late_policy, commute_factor)],
@@ -173,24 +189,44 @@ def insert_assignment():
             """
             SELECT DISTINCT deadline_variable 
             FROM lp_template_deadvar_phases
-            WHERE late_policy_name = ? AND deadline_variable LIKE '%%x%%'
+            WHERE late_policy_name = ?
             """,
             (next(x for x in lp_checklist if x is not None),),
         )
         distinct_deadvars = c.fetchall()
-    conn.close()
 
+    template_excerpt2 = [None] * len(distinct_deadvars)
+    # if the assignment uses a template and doesn't override its late policy...
+    if template is not None and plc[1] is None:
+        with conn:
+            c = conn.cursor()
+            c.execute(
+                """
+                SELECT * 
+                FROM template_deadvar_maps
+                WHERE template = ? AND class_name = ?
+                """,
+                (template, class_name),
+            )
+    conn.close()
     deadvar_map_entries = []
     print(f"{format_str}deadlines{format_str}")
     for i in range(len(distinct_deadvars)):
-        var_to_inspect = distinct_deadvars[i][0]
-        deadvar_instance = var_to_inspect
-        deadvar_instance = str(
-            parser.parse(input(f"  {format_str}instance of {var_to_inspect}: "))
+        post_str = (
+            " (overriding template)" if template_excerpt2[i] is not None else ""
         )
-        deadvar_map_entries.append(
-            (assignment_name, class_name, var_to_inspect, deadvar_instance)
+        deadvar_instance = null_sieve(
+            input(f"  {format_str}instance of deadvar {i}{post_str}: ")
         )
+        if deadvar_instance is not None:
+            deadvar_map_entries.append(
+                (
+                    assignment_name,
+                    class_name,
+                    i,
+                    str(parser.parse(deadvar_instance)),
+                )
+            )
 
     store(
         "assignments",
