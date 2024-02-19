@@ -52,7 +52,7 @@ CREATE TABLE IF NOT EXISTS template_deadvar_maps (
     deadline_date TEXT NOT NULL,
     deadline_hour INT NOT NULL,
     deadline_min INT NOT NULL,
-    FOREIGN KEY (template, class_name) REFERENCES assignment_templates (assignment_type, class_name) ON UPDATE CASCADE,
+    FOREIGN KEY (template, class_name) REFERENCES assignment_templates (assignment_type, class_name) ON DELETE CASCADE,
     PRIMARY KEY (
         template,
         class_name,
@@ -81,7 +81,7 @@ CREATE TABLE IF NOT EXISTS assignment_deadvar_maps (
     deadline_date TEXT NOT NULL,
     deadline_hour INT NOT NULL,
     deadline_min INT NOT NULL,
-    FOREIGN KEY (assignment_name, class_name) REFERENCES assignments (assignment_name, class_name) ON UPDATE CASCADE,
+    FOREIGN KEY (assignment_name, class_name) REFERENCES assignments (assignment_name, class_name) ON DELETE CASCADE,
     PRIMARY KEY (
         assignment_name,
         class_name,

@@ -1021,4 +1021,12 @@ E^FW -> ~EvFR
 DO NOT DELETE any invalid deadvar maps entries...just omit them from prindex computation and wait until they all expire and the template/assignment is dropped (which cascades) 
 
 assignment clean_up function should check whether there exist valid deadvar mappings in the assignment's template: it's not symmetrical!!
+
+
+DELETE FROM template_deadvar_maps 
+WHERE CAST(julianday(datetime(deadline_date, '+' || deadline_hour || ' hours', '+' || deadline_min || ' minutes')) - julianday('now', 'localtime') AS INTEGER) <= 0;
+
+DELETE FROM assignment_deadvar_maps 
+WHERE CAST(julianday(datetime(deadline_date, '+' || deadline_hour || ' hours', '+' || deadline_min || ' minutes')) - julianday('now', 'localtime') AS INTEGER) <= 0;
+
 """
