@@ -122,20 +122,56 @@ def insert_assignment_template():
             c = conn.cursor()
             c.execute(
                 """
-                SELECT DISTINCT deadline_variable 
+                SELECT DISTINCT deadvar
                 FROM lp_template_deadvar_phases
                 WHERE late_policy_name = ?
                 """,
                 (late_policy,),
             )
             distinct_deadvars = c.fetchall()
-
         conn.close()
+
+        deadvar_map_entries = []
+        print(f"{format_str}deadlines{format_str}")
+        for i in range(len(distinct_deadvars)):
+            deadvar_date = null_sieve(
+                input(f"  {format_str}deadvar {i} date: ")
+            )
+            deadvar_time = null_sieve(
+                input(f"  {format_str}deadvar {i} time: ")
+            )
+
+            # if user has a non-null entry for deadvar_date or deadvar_time...
+            if deadvar_date is not None or deadvar_time is not None:
+                # if the string cannot be parsed it's user's fault
+                processed_date = (
+                    str(parser.parse(deadvar_date))
+                    if deadvar_date is not None
+                    else deadvar_date
+                )
+
+                processed_time = (
+                    parser.parse(deadvar_time)
+                    if deadvar_time is not None
+                    else deadvar_time
+                )
+
+                deadvar_map_entries.append(
+                    (
+                        assignment_type,
+                        class_name,
+                        i,
+                        processed_date,
+                        processed_time.hour,
+                        processed_time.min,
+                    )
+                )
 
     store(
         "assignment_templates",
         [(assignment_type, class_name, points, late_policy, commute_factor)],
     )
+    store("template_deadvar_maps", deadvar_map_entries)
 
 
 def insert_assignment():
@@ -187,7 +223,7 @@ def insert_assignment():
         c = conn.cursor()
         c.execute(
             """
-            SELECT DISTINCT deadline_variable 
+            SELECT DISTINCT deadvar
             FROM lp_template_deadvar_phases
             WHERE late_policy_name = ?
             """,
@@ -197,42 +233,66 @@ def insert_assignment():
 
     template_excerpt2 = [None] * len(distinct_deadvars)
     # if the assignment uses a template and doesn't override its late policy...
-    if template is not None and plc[1] is None:
+    # (the template is assumed to be using a late policy in this case)
+    if template is not None and lp_checklist[0] is None:
         with conn:
             c = conn.cursor()
             c.execute(
                 """
-                SELECT * 
-                FROM template_deadvar_maps
-                WHERE template = ? AND class_name = ?
+                SELECT template_deadvar_maps.deadvar
+                FROM assignment_templates
+                INNER JOIN lp_template_deadvar_phases ON lp_template_deadvar_phases.late_policy_name = assignment_templates.late_policy_name
+                LEFT JOIN template_deadvar_maps ON template_deadvar_maps.deadvar = lp_template_deadvar_phases.deadvar AND template_deadvar_maps.template = assignment_templates.assignment_type AND template_deadvar_maps.class_name = assignment_templates.class_name
+                WHERE assignment_templates.assignment_type = ? AND assignment_templates.class_name = ?
                 """,
                 (template, class_name),
             )
     conn.close()
+
     deadvar_map_entries = []
     print(f"{format_str}deadlines{format_str}")
     for i in range(len(distinct_deadvars)):
+        """add override message iff the template already has a mapping for that deadvar"""
         post_str = (
             " (overriding template)" if template_excerpt2[i] is not None else ""
         )
-        deadvar_instance = null_sieve(
-            input(f"  {format_str}instance of deadvar {i}{post_str}: ")
+        deadvar_date = null_sieve(
+            input(f"  {format_str}deadvar {i} date {post_str}: ")
         )
-        if deadvar_instance is not None:
+        deadvar_time = null_sieve(
+            input(f"  {format_str}deadvar {i} time {post_str}: ")
+        )
+
+        # if user has a non-null entry for deadvar_date or deadvar_time...
+        if deadvar_date is not None or deadvar_time is not None:
+            # if the string cannot be parsed it's user's fault
+            processed_date = (
+                str(parser.parse(deadvar_date))
+                if deadvar_date is not None
+                else deadvar_date
+            )
+
+            processed_time = (
+                parser.parse(deadvar_time)
+                if deadvar_time is not None
+                else deadvar_time
+            )
+
             deadvar_map_entries.append(
                 (
                     assignment_name,
                     class_name,
                     i,
-                    str(parser.parse(deadvar_instance)),
+                    processed_date,
+                    processed_time.hour,
+                    processed_time.min,
                 )
             )
-
     store(
         "assignments",
         [(assignment_name, class_name, *plc, template)],
     )
-    store("deadvar_maps", deadvar_map_entries)
+    store("assignment_deadvar_maps", deadvar_map_entries)
 
 
 def get_insert_input() -> str:

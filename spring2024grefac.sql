@@ -1,4 +1,6 @@
-CREATE TABLE IF NOT EXISTS major_maps (
+PRAGMA foreign_keys = OFF;
+BEGIN TRANSACTION;
+CREATE TABLE major_maps (
     major_state TEXT PRIMARY KEY CHECK (
         major_state == 'm'
         OR major_state == 'g'
@@ -8,20 +10,34 @@ CREATE TABLE IF NOT EXISTS major_maps (
         AND major_factor <= 1
     )
 );
-CREATE TABLE IF NOT EXISTS classes (
+INSERT INTO major_maps
+VALUES('m', 1.0);
+INSERT INTO major_maps
+VALUES('g', 0.8);
+CREATE TABLE classes (
     class_name TEXT PRIMARY KEY,
     major_state TEXT NOT NULL,
     total_class_points INTEGER NOT NULL CHECK (total_class_points > 0),
     FOREIGN KEY (major_state) REFERENCES major_maps (major_state) ON UPDATE CASCADE
 );
-CREATE TABLE IF NOT EXISTS lp_templates (late_policy_name TEXT PRIMARY KEY);
-CREATE TABLE IF NOT EXISTS lp_template_deadvars (
+INSERT INTO classes
+VALUES('cmsc351', 'm', 600);
+CREATE TABLE lp_templates (late_policy_name TEXT PRIMARY KEY);
+INSERT INTO lp_templates
+VALUES('5x3');
+INSERT INTO lp_templates
+VALUES('stand');
+CREATE TABLE lp_template_deadvars (
     late_policy_name TEXT,
     deadvar INT,
     FOREIGN KEY (late_policy_name) REFERENCES lp_templates (late_policy_name) ON UPDATE CASCADE,
     PRIMARY KEY (late_policy_name, deadvar)
 );
-CREATE TABLE IF NOT EXISTS lp_template_deadvar_phases (
+INSERT INTO lp_template_deadvars
+VALUES('5x3', 0);
+INSERT INTO lp_template_deadvars
+VALUES('stand', 0);
+CREATE TABLE lp_template_deadvar_phases (
     late_policy_name TEXT,
     phase_value REAL CHECK (
         0 < phase_value
@@ -32,7 +48,17 @@ CREATE TABLE IF NOT EXISTS lp_template_deadvar_phases (
     FOREIGN KEY (late_policy_name, deadvar) REFERENCES lp_template_deadvars (late_policy_name, deadvar) ON UPDATE CASCADE,
     PRIMARY KEY (late_policy_name, deadvar, hour_offset)
 );
-CREATE TABLE IF NOT EXISTS assignment_templates (
+INSERT INTO lp_template_deadvar_phases
+VALUES('5x3', 0.05, 0, 0);
+INSERT INTO lp_template_deadvar_phases
+VALUES('5x3', 0.05, 0, 24);
+INSERT INTO lp_template_deadvar_phases
+VALUES('5x3', 0.05, 0, 48);
+INSERT INTO lp_template_deadvar_phases
+VALUES('5x3', 0.85, 0, 72);
+INSERT INTO lp_template_deadvar_phases
+VALUES('stand', 1.0, 0, 0);
+CREATE TABLE assignment_templates (
     assignment_type TEXT,
     class_name TEXT,
     points REAL,
@@ -45,13 +71,21 @@ CREATE TABLE IF NOT EXISTS assignment_templates (
     FOREIGN KEY (late_policy_name) REFERENCES lp_templates (late_policy_name) ON UPDATE CASCADE,
     PRIMARY KEY (assignment_type, class_name)
 );
-CREATE TABLE IF NOT EXISTS template_deadvar_maps (
+INSERT INTO assignment_templates
+VALUES(
+        'hw',
+        'cmsc351',
+        11.111111111111111604,
+        'stand',
+        0.25
+    );
+CREATE TABLE template_deadvar_maps (
     template TEXT,
     class_name TEXT,
     deadvar INT,
-    deadline_date TEXT,
-    deadline_hour INT,
-    deadline_min INT,
+    deadline_date TEXT NOT NULL,
+    deadline_hour INT NOT NULL,
+    deadline_min INT NOT NULL,
     FOREIGN KEY (template, class_name) REFERENCES assignment_templates (assignment_type, class_name) ON DELETE CASCADE,
     PRIMARY KEY (
         template,
@@ -59,7 +93,7 @@ CREATE TABLE IF NOT EXISTS template_deadvar_maps (
         deadvar
     )
 );
-CREATE TABLE IF NOT EXISTS assignments (
+CREATE TABLE assignments (
     assignment_name TEXT,
     class_name TEXT,
     points REAL,
@@ -74,13 +108,13 @@ CREATE TABLE IF NOT EXISTS assignments (
     FOREIGN KEY (template, class_name) REFERENCES assignment_templates (assignment_type, class_name) ON UPDATE CASCADE,
     PRIMARY KEY (assignment_name, class_name)
 );
-CREATE TABLE IF NOT EXISTS assignment_deadvar_maps (
+CREATE TABLE assignment_deadvar_maps (
     assignment_name TEXT,
     class_name TEXT,
     deadvar INT,
-    deadline_date TEXT,
-    deadline_hour INT,
-    deadline_min INT,
+    deadline_date TEXT NOT NULL,
+    deadline_hour INT NOT NULL,
+    deadline_min INT NOT NULL,
     FOREIGN KEY (assignment_name, class_name) REFERENCES assignments (assignment_name, class_name) ON DELETE CASCADE,
     PRIMARY KEY (
         assignment_name,
@@ -88,6 +122,4 @@ CREATE TABLE IF NOT EXISTS assignment_deadvar_maps (
         deadvar
     )
 );
-INSERT INTO major_maps
-VALUES ('m', 1),
-    ('g', 0.8);
+COMMIT;

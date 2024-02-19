@@ -7,10 +7,10 @@ To do ASAP:
             - X lp_template_deadvar_phases
         - X fix prindex computation
         - X cleanup funct
-        - change input functions
+        - X change input functions
             - X insert_late_policy()
-            - insert assignment_template()
-            - insert assignment()
+            - X insert assignment_template()
+            - X insert assignment()
 
 Future Work:
     - drop_assignment()
