@@ -367,7 +367,19 @@ def generate_prindex_table():
                 LEFT JOIN template_deadvar_maps ON template_deadvar_maps.template = assignment_templates.assignment_type AND template_deadvar_maps.class_name = assignment_templates.class_name AND template_deadvar_maps.deadvar = lp_template_deadvar_phases.deadvar
                 WHERE COALESCE(assignment_deadvar_maps.deadvar, template_deadvar_maps.deadvar) IS NULL OR CAST(julianday(datetime(COALESCE(assignment_deadvar_maps.deadline_date, template_deadvar_maps.deadline_date), '+' || COALESCE(assignment_deadvar_maps.deadline_hour, template_deadvar_maps.deadline_hour) || ' hours', '+' || COALESCE(assignment_deadvar_maps.deadline_min, template_deadvar_maps.deadline_min) || ' minutes')) - julianday('now', 'localtime') AS INTEGER) > 0
             );
-    
+
+            CREATE TEMP TABLE class_point_losses AS
+            SELECT class_name, COALESCE(SUM(point_losses), 0.0) AS total_points_lost
+            FROM (
+                SELECT 
+                    classes.class_name, 
+                    gradebook.assignment_name, (1.0 - gradebook.pct_grade) * COALESCE(gradebook.value_in_class_points, assignment_templates.points) AS point_losses
+                FROM classes
+                LEFT JOIN gradebook ON gradebook.class_name = classes.class_name
+                LEFT JOIN assignment_templates ON assignment_templates.assignment_type = gradebook.template AND assignment_templates.class_name = gradebook.class_name
+            )
+            GROUP BY class_name;
+
             CREATE TEMP TABLE p_parts AS
             SELECT assignments.assignment_name, assignments.class_name, COALESCE(assignment_deadvar_maps.deadline_date, template_deadvar_maps.deadline_date), CAST(lp_template_deadvar_phases.phase_value / (CAST(24*60*(julianday(datetime(COALESCE(assignment_deadvar_maps.deadline_date, template_deadvar_maps.deadline_date), '+' || (lp_template_deadvar_phases.hour_offset + COALESCE(assignment_deadvar_maps.deadline_hour, template_deadvar_maps.deadline_hour)) || ' hours', '+' || COALESCE(assignment_deadvar_maps.deadline_min, template_deadvar_maps.deadline_min) || ' minutes')) - julianday('now', 'localtime')) AS INTEGER)) AS REAL) AS p_summand
             FROM assignments
@@ -380,11 +392,16 @@ def generate_prindex_table():
             CREATE TEMP TABLE prindexes AS
             SELECT class_name, assignment_name, prindex, commute_factor*prindex AS cprindex
             FROM (
-                SELECT assignments.assignment_name, assignments.class_name, major_maps.major_factor*COALESCE(assignments.points, assignment_templates.points)*(1.0/classes.total_class_points)*(SUM(p_parts.p_summand))*100000.0 as prindex, COALESCE(assignments.commute_factor, assignment_templates.commute_factor) AS commute_factor
+                SELECT 
+                    assignments.assignment_name, 
+                    assignments.class_name, 
+                    (((1.0 - major_maps.starting_offset) * ((100.0 * class_point_losses.total_points_lost) / ((100.0 - major_maps.passing_grade) * classes.total_class_points))) + major_maps.starting_offset) * COALESCE(assignments.points, assignment_templates.points) * (1.0 / classes.total_class_points) * (SUM(p_parts.p_summand)) * 100000.0 as prindex, 
+                    COALESCE(assignments.commute_factor, assignment_templates.commute_factor) AS commute_factor
                 FROM p_parts
                 INNER JOIN assignments ON assignments.assignment_name = p_parts.assignment_name AND assignments.class_name = p_parts.class_name
                 LEFT JOIN assignment_templates ON assignment_templates.assignment_type = assignments.template AND assignment_templates.class_name = assignments.class_name
                 INNER JOIN classes ON classes.class_name = assignments.class_name
+                INNER JOIN class_point_losses ON class_point_losses.class_name = classes.class_name
                 INNER JOIN major_maps ON major_maps.major_state = classes.major_state
                 GROUP BY assignments.assignment_name, assignments.class_name
                 );

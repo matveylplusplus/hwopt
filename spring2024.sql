@@ -5,13 +5,13 @@ CREATE TABLE major_maps (
         major_state == 'm'
         OR major_state == 'g'
     ),
-    scaling_factor REAL NOT NULL,
+    passing_grade REAL NOT NULL,
     starting_offset REAL NOT NULL
 );
 INSERT INTO major_maps
-VALUES('m', 3.0, 0.1);
+VALUES('m', 70.0, 0.4);
 INSERT INTO major_maps
-VALUES('g', 2.3, 0.08);
+VALUES('g', 60.0, 0.2);
 CREATE TABLE classes (
     class_name TEXT PRIMARY KEY,
     major_state TEXT NOT NULL,
@@ -324,9 +324,14 @@ VALUES(
         NULL,
         NULL
     );
-CREATE TABLE point_losses (
+CREATE TABLE gradebook (
     class_name TEXT,
     assignment_name TEXT,
-    point_loss REAL,
-    FOREIGN KEY (class_name) REFERENCES classes (class_name) ON DELETE CASCADE
-) COMMIT;
+    pct_grade REAL NOT NULL,
+    value_in_class_points REAL,
+    template TEXT,
+    FOREIGN KEY (class_name) REFERENCES classes (class_name) ON DELETE CASCADE,
+    FOREIGN KEY (template, class_name) REFERENCES assignment_templates (assignment_type, class_name) ON DELETE CASCADE,
+    PRIMARY KEY (class_name, assignment_name)
+);
+COMMIT;

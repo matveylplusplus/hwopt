@@ -1,11 +1,13 @@
 """
 To do ASAP:
     - Implement gradecurve
-        - update prindex computation
-        - re-form db
+        - X create gradebook table
+        - X update prindex computation (replace major factor with gradecurve)
+        - ? consolidate prindex computation using subqueries?
+        - X re-form db
+        - X check that prindex yields no compile time errors
         - insert_point_loss()
         - insert all point losses
-        - consolidate prindex cm
 
 Future Work:
     - drop_assignment()
@@ -1034,4 +1036,5 @@ boost grade if doing poorly in class
     - ask for # of points that u have completely lost
 
 reciprocal might not be the only way to quantify the relationship between the importance of an assignment and the time that remains to complete it...we could use any function st f(1) (or f(0)) = 1 and lim f(x) as x tends to infty = 0
+    - actually no it has to be because we want to preserve the property that (all else equal) a 20 point assignment due in 2 days has equal worth with a 10 point assignment due in 1 day
 """
