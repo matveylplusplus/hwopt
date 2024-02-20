@@ -1,16 +1,11 @@
 """
 To do ASAP:
-    - Implement templated duetime
-        - X tables
-            - X assignment_deadvar_maps
-            - X template_deadvar_maps
-            - X lp_template_deadvar_phases
-        - X fix prindex computation
-        - X cleanup funct
-        - X change input functions
-            - X insert_late_policy()
-            - X insert assignment_template()
-            - X insert assignment()
+    - Implement gradecurve
+        - update prindex computation
+        - re-form db
+        - insert_point_loss()
+        - insert all point losses
+        - consolidate prindex cm
 
 Future Work:
     - drop_assignment()
