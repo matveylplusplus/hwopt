@@ -6,12 +6,13 @@ To do ASAP:
         - ? consolidate prindex computation using subqueries?
         - X re-form db
         - X check that prindex yields no compile time errors
-        - insert_point_loss()
-        - add gradebook to view
+        - X insert_point_loss()
+        - X add gradebook to view
         - insert all point losses
+    - change gradebook to point_loss_book
+    - fix cleanup
 
 Future Work:
-    - drop_assignment()
     - update_assignment()
         - update_points()
         - update_deadlines()
@@ -33,6 +34,8 @@ Future Work:
         - the code is hard to read
         - cohesion could be improved, as processing of input is mish-mashed with providing the input itself...although certainly not out of a lack of trying; the input the user gives directly determines what input we should ask for, so we can't just split it into input() and process()
     - consistent column orders between tables
+    - automate gradebook insertion somehow
+    - drop_assignment()
 """
 
 import pandas as pd
@@ -1038,4 +1041,39 @@ boost grade if doing poorly in class
 
 reciprocal might not be the only way to quantify the relationship between the importance of an assignment and the time that remains to complete it...we could use any function st f(1) (or f(0)) = 1 and lim f(x) as x tends to infty = 0
     - actually no it has to be because we want to preserve the property that (all else equal) a 20 point assignment due in 2 days has equal worth with a 10 point assignment due in 1 day
+
+INSERT INTO OR IGNORE
+
+current cleanups don't work
+
+DELETE FROM assignment_templates
+WHERE NOT EXISTS (
+    SELECT * FROM lp_template_deadvar_phases
+    LEFT JOIN assignment_templates ON assignment_templates.late_policy_name = lp_template_deadvar_phases.late_policy_name
+    LEFT JOIN template_deadvar_maps ON template_deadvar_maps.template = assignment_templates.assignment_type AND template_deadvar_maps.class_name = assignment_templates.class_name AND template_deadvar_maps.deadvar = lp_template_deadvar_phases.deadvar
+    WHERE template_deadvar_maps.deadvar IS NULL OR CAST(julianday(datetime(template_deadvar_maps.deadline_date, '+' || template_deadvar_maps.deadline_hour || ' hours', '+' || template_deadvar_maps.deadline_min || ' minutes')) - julianday('now', 'localtime') AS INTEGER) > 0
+);
+
+DELETE FROM assignments
+WHERE NOT EXISTS (
+    SELECT * FROM lp_template_deadvar_phases
+    LEFT JOIN assignments ON assignments.late_policy_name = lp_template_deadvar_phases.late_policy_name
+    LEFT JOIN assignment_deadvar_maps ON assignment_deadvar_maps.assignment_name = assignments.assignment_name AND assignment_deadvar_maps.class_name = assignments.class_name AND assignment_deadvar_maps.deadvar = lp_template_deadvar_phases.deadvar
+    LEFT JOIN assignment_templates ON assignment_templates.assignment_type = assignments.template AND assignment_templates.class_name = assignments.class_name
+    LEFT JOIN template_deadvar_maps ON template_deadvar_maps.template = assignment_templates.assignment_type AND template_deadvar_maps.class_name = assignment_templates.class_name AND template_deadvar_maps.deadvar = lp_template_deadvar_phases.deadvar
+    WHERE COALESCE(assignment_deadvar_maps.deadvar, template_deadvar_maps.deadvar) IS NULL OR CAST(julianday(datetime(COALESCE(assignment_deadvar_maps.deadline_date, template_deadvar_maps.deadline_date), '+' || COALESCE(assignment_deadvar_maps.deadline_hour, template_deadvar_maps.deadline_hour) || ' hours', '+' || COALESCE(assignment_deadvar_maps.deadline_min, template_deadvar_maps.deadline_min) || ' minutes')) - julianday('now', 'localtime') AS INTEGER) > 0
+);
+
+situation: enter midterm into hwopt. go take midterm without dropping the assignment. result: midterm gets post-mortemed as grade 0?
+    - in the same vein, what if it's just a regular assignment that you submitted but you forgot to manually hit the drop_assignment()?
+    - how could we possibly automate this without the system somehow connecting to ELMS servers and/or exam proctors' heads and/or your head
+    - at the end of the day, hwopt needs to somehow know whether you've submitted an assignment. Either you tell it manually (unreliable, high life overhead), or some other system tells it automatically (way far out of my depth)
+    - what if we put past-due assignments into limbo: a temporary place containing all assignments (or assignment phases) whose fates are undecided
+        - to be graded (which you set and then instantiate later)
+            - problem here is that we might be saving information for nothing: assignments that get 100% are irrelevant to prindex computation and would have to be manually deleted from the to-be-graded pile
+        - to be dropped
+
+maybe marking assignments as "completed" (and then autofilling point losses appropriately based on when you marked it completed) is the best option, even if it requires continuous diligence on your part
+    - you can also mark it as "to be graded" to indicate that there may be more point losses coming in the future w/ this assignment (putting it in a special table for later access)
+    - but this would mean that any potential point losses wouldn't actually come into prindex computation until the assignment has been declared "completed", which could mean we're dealing with a not-completely correct prindex for some unspecified period of time
 """
