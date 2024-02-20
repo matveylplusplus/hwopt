@@ -309,12 +309,56 @@ def insert_assignment():
     store("assignment_deadvar_maps", deadvar_map_entries)
 
 
+def insert_grade():
+    pre_input_fix = " - "
+    post_input_fix = ": "
+
+    print("\nProvide the following information (or hit Ctrl+C to exit)...")
+    class_name = input(f"{pre_input_fix}class name{post_input_fix}")
+    template = null_sieve(input(f"{pre_input_fix}template{post_input_fix}"))
+    assignment_name = input(f"{pre_input_fix}assignment name{post_input_fix}")
+    grade = input(f"{pre_input_fix}grade (pct){post_input_fix}")
+
+    # fraction parse
+    if grade is not None and "/" in grade:
+        split_frac = grade.split("/")
+        grade = str(Decimal(int(split_frac[0])) / Decimal(int(split_frac[1])))
+
+    template_excerpt = None
+    conn = connect_to_db()
+    if template is not None:
+        c = conn.cursor()
+        c.execute(
+            """
+            SELECT points
+            FROM assignment_templates
+            WHERE assignment_type = ? AND class_name = ?
+        """,
+            (template, class_name),
+        )
+        template_excerpt = c.fetchone()
+    post_point_str = (
+        " (overriding template)" if template_excerpt is not None else ""
+    )
+    value_in_class_points = null_sieve(
+        input(
+            f"{pre_input_fix}assignment value in class points{post_point_str}{post_input_fix}"
+        )
+    )
+
+    store(
+        "gradebook",
+        [(class_name, assignment_name, grade, value_in_class_points, template)],
+    )
+
+
 def get_insert_input() -> str:
     print("\nWhat would you like to insert?")
     print(" - (1) Class")
     print(" - (2) Late Policy")
     print(" - (3) Assignment Template")
     print(" - (4) Assignment")
+    print(" - (5) Grade")
     print(" - (Ctrl+C) get me the hell outta here")
     return input()
 
@@ -329,6 +373,8 @@ def process_insert_input(pick: str):
             insert_assignment_template()
         elif pick == "4":
             insert_assignment()
+        elif pick == "5":
+            insert_grade()
     except KeyboardInterrupt:
         print()
         pass
@@ -395,7 +441,7 @@ def generate_prindex_table():
                 SELECT 
                     assignments.assignment_name, 
                     assignments.class_name, 
-                    (((1.0 - major_maps.starting_offset) * ((100.0 * class_point_losses.total_points_lost) / ((100.0 - major_maps.passing_grade) * classes.total_class_points))) + major_maps.starting_offset) * COALESCE(assignments.points, assignment_templates.points) * (1.0 / classes.total_class_points) * (SUM(p_parts.p_summand)) * 100000.0 as prindex, 
+                    (((1.0 - major_maps.starting_offset) * ((100.0 * class_point_losses.total_points_lost) / ((100.0 - major_maps.passing_grade) * classes.total_class_points))) + major_maps.starting_offset) * COALESCE(assignments.points, assignment_templates.points) * (1.0 / classes.total_class_points) * (SUM(p_parts.p_summand)) * 1000000.0 as prindex, 
                     COALESCE(assignments.commute_factor, assignment_templates.commute_factor) AS commute_factor
                 FROM p_parts
                 INNER JOIN assignments ON assignments.assignment_name = p_parts.assignment_name AND assignments.class_name = p_parts.class_name
@@ -442,12 +488,14 @@ def view_loop():
                 "Late Policies",
                 "Assignment Templates",
                 "Assignments",
+                "Gradebook",
             ]
             dbtable_list = [
                 "classes",
                 "lp_templates",
                 "assignment_templates",
                 "assignments",
+                "gradebook",
             ]
 
             for i in range(len(table_list)):
