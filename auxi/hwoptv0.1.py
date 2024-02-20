@@ -1034,4 +1034,9 @@ FROM assignment_templates
 INNER JOIN lp_template_deadvar_phases ON lp_template_deadvar_phases.late_policy_name = assignment_templates.late_policy_name
 LEFT JOIN template_deadvar_maps ON template_deadvar_maps.deadvar = lp_template_deadvar_phases.deadvar AND template_deadvar_maps.template = assignment_templates.assignment_type AND template_deadvar_maps.class_name = assignment_templates.class_name
 WHERE assignment_templates.assignment_type = ? AND assignment_templates.class_name = ?
+
+boost grade if doing poorly in class
+    - ask for # of points that u have completely lost
+
+reciprocal might not be the only way to quantify the relationship between the importance of an assignment and the time that remains to complete it...we could use any function st f(1) (or f(0)) = 1 and lim f(x) as x tends to infty = 0
 """
