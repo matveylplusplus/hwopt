@@ -1068,12 +1068,20 @@ situation: enter midterm into hwopt. go take midterm without dropping the assign
     - in the same vein, what if it's just a regular assignment that you submitted but you forgot to manually hit the drop_assignment()?
     - how could we possibly automate this without the system somehow connecting to ELMS servers and/or exam proctors' heads and/or your head
     - at the end of the day, hwopt needs to somehow know whether you've submitted an assignment. Either you tell it manually (unreliable, high life overhead), or some other system tells it automatically (way far out of my depth)
-    - what if we put past-due assignments into limbo: a temporary place containing all assignments (or assignment phases) whose fates are undecided
+    - what if we put past-due assignments into limbo: a temporary place containing all assignments (or assignment phases) whose fates are undecided unitl you enter the limbo and decide them
         - to be graded (which you set and then instantiate later)
             - problem here is that we might be saving information for nothing: assignments that get 100% are irrelevant to prindex computation and would have to be manually deleted from the to-be-graded pile
         - to be dropped
+        - would have to manually sign off on the fate of every assignment phase in limbo
+        - feels kind of unintuitive from the user experience perspective
 
 maybe marking assignments as "completed" (and then autofilling point losses appropriately based on when you marked it completed) is the best option, even if it requires continuous diligence on your part
     - you can also mark it as "to be graded" to indicate that there may be more point losses coming in the future w/ this assignment (putting it in a special table for later access)
     - but this would mean that any potential point losses wouldn't actually come into prindex computation until the assignment has been declared "completed", which could mean we're dealing with a not-completely correct prindex for some unspecified period of time
+
+bottom line: use case (should be) rare. The fact that there's no good, simple design pattern I can think of to implement this feature either means I'm a) retarded or b) better off just inputting late policy deductions into the gradebook table via the input function because the alternative would be making a system so intricate that the development costs wouldn't be worth the benefits. Coming up with a whole sophisticated system to save time in an edge case seems like overkill
+
+wait...why not just add pct_grade as a column to assignments??
+
+furthermore: who said assignments need to be deleted once we're done with them?
 """
