@@ -9,8 +9,10 @@ To do ASAP:
         - X insert_point_loss()
         - X add gradebook to view
         - insert all point losses
-    - change gradebook to point_loss_book
-    - fix cleanup
+    -  refactor gradebook into a new pct_loss column in assignments
+    -  get rid of any deletes
+    -  refactor insert_assignment()  
+    -  fix cleanup
 
 Future Work:
     - update_assignment()
@@ -1080,8 +1082,31 @@ maybe marking assignments as "completed" (and then autofilling point losses appr
     - but this would mean that any potential point losses wouldn't actually come into prindex computation until the assignment has been declared "completed", which could mean we're dealing with a not-completely correct prindex for some unspecified period of time
 
 bottom line: use case (should be) rare. The fact that there's no good, simple design pattern I can think of to implement this feature either means I'm a) retarded or b) better off just inputting late policy deductions into the gradebook table via the input function because the alternative would be making a system so intricate that the development costs wouldn't be worth the benefits. Coming up with a whole sophisticated system to save time in an edge case seems like overkill
+    - the problem is that my time is wasted inserting assignments into gradebook that I already inserted into assignments...why??
 
 wait...why not just add pct_grade as a column to assignments??
 
 furthermore: who said assignments need to be deleted once we're done with them?
+
+add pct_loss column to assignments?
+
+Better yet, a "# of passed phases" column 
+    - wouldn't this require an imposition of order on the phases to determine which ones get computed first
+
+pct_loss column on assignments which gets automatically UPDATEd with the sum of all the passed phase values until user marks the assignment as "complete" (not necessarily submitted). Once an assignment is marked as complete, user can manually input any point loss that occurred as a result of grading (input can take in a grade and just convert it)
+    - assignments whose deadlines are all passed are automatically marked as graves, with a pct_loss of 100
+    - three state are grave (all deadlines passed), submitted (not all deadlines passed and marked as submitted), and pending/active (not all deadlines passed and not marked as submitted)
+    - submitted assignments are the only ones that can be assigned manual point losses (input as x/y grades)
+    - input_assignments should ask for state (submitted vs active). Actives that are past their deadlines are automatically converted to graves
+    - prindex only shows actives in the table presented to user, but uses linear scaling that is informed by all 3 states
+    - to avoid relying on user to enter submits when they actually happen: submit [date]/now. can be used to revive graves if date is before one or more of the deadlines
+
+Instead of automatic point loss insertion (which relies on user not being silly), what if we do insert_point_loss(submission_time: datetime, assignment_name: assignment)
+    - this just rams us into the same problem we recognized with the "autofill after assignment completion is indicated" approach: point loss is not computed as soon as it happens, and if it is then we're forced to sign off on every individual phase (unless they somehow get conglomerated into one, but this would go against the whole purpose of the system because it still fucks you if you don't sign off fast enough?)
+    - Instead, insert_point_loss(assignment_name, class_name)
+        - Adds in point losses relative to current date and time
+
+pct_loss is just the (1.0 - p_g/p_t) factor: easy replacement
+
+automatic point loss insertion until told otherwise by submit [date], and submits' point losses can be overriden by grade input
 """
