@@ -9,10 +9,11 @@ To do ASAP:
         - X insert_point_loss()
         - X add gradebook to view
         - insert all point losses
-    -  refactor gradebook into a new pct_loss column in assignments
-    -  get rid of any deletes
-    -  refactor insert_assignment()  
-    -  fix cleanup
+    -  refactor gradebook into new pct_loss, submmited columns in assignments
+    -  add pct_loss updates (on unsubmits) in prindex computation
+    -  refactor prindex computation
+    -  refactor insert_assignment() to incorporate submitted boolean
+    -  input_grade()
 
 Future Work:
     - update_assignment()
