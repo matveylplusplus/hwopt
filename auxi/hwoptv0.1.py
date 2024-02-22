@@ -38,6 +38,7 @@ Future Work:
     - automate gradebook insertion somehow
     - drop_assignment()
     - convert pct_loss column to just taking in real numbers from 0 to 1 because the we multiply by 100 in input_grade() and divide by it in prindex generation its literally so stupid 
+        - or just present the table to user as a percentage but have it be stored internally as a number in [0.0, 1.0]
 """
 
 import pandas as pd
