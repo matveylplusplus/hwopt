@@ -1,11 +1,13 @@
 """
 To do ASAP:
     - X refactor gradebook into new pct_loss, submmited columns in assignments
-    -  add pct_loss updates (on unsubmits) in pre-prindex computation
-    -  refactor prindex computation
-    -  fix current assignment entries
-    -  refactor insert_assignment() to incorporate submitted boolean
+    - X add pct_loss updates (on unsubmits) in pre-prindex computation
+    - X refactor prindex computation
+    - X fix current assignment entries
+    -  refactor insert_assignment() to incorporate submitted boolean (user does not determine pct_loss unless grading)
+    -  submit function
     -  input_grade(), with fraction parser (submits only)
+    -  put in past assignments 
 
 Future Work:
     - update_assignment()
@@ -1102,4 +1104,32 @@ Instead of automatic point loss insertion (which relies on user not being silly)
 pct_loss is just the (1.0 - p_g/p_t) factor: easy replacement
 
 automatic point loss insertion until told otherwise by submit [date], and submits' point losses can be overriden by grade input
+
+CREATE TEMP TABLE complete_table AS
+SELECT
+    classes.class_name,
+    assignments.assignment_name,
+    major_maps.major_state,
+    major_maps.passing_grade,
+    major_maps.starting_offset,
+    lp_template_deadvar_phases.late_policy_name, lp_template_deadvar_phases.phase_value, 
+    (CAST(24*60*(julianday(datetime(COALESCE(assignment_deadvar_maps.deadline_date, template_deadvar_maps.deadline_date), '+' || (lp_template_deadvar_phases.hour_offset + COALESCE(assignment_deadvar_maps.deadline_hour, template_deadvar_maps.deadline_hour)) || ' hours', '+' || COALESCE(assignment_deadvar_maps.deadline_min, template_deadvar_maps.deadline_min) || ' minutes')) - julianday('now', 'localtime')) AS INTEGER)) AS minutes_to_deadline
+FROM assignments
+INNER JOIN classes ON classes.class_name = assignments.assignment_name
+INNER JOIN major_maps ON major_maps.major_state = classes.major_state
+LEFT JOIN assignment_templates ON assignment_templates.assignment_type = assignments.template AND assignment_templates.class_name = assignments.class_name
+INNER JOIN lp_template_deadvar_phases ON lp_template_deadvar_phases.late_policy_name = COALESCE(assignments.late_policy_name, assignment_templates.late_policy_name)
+LEFT JOIN assignment_deadvar_maps ON assignment_deadvar_maps.assignment_name = assignments.assignment_name AND assignment_deadvar_maps.class_name = assignments.class_name AND assignment_deadvar_maps.deadvar = lp_template_deadvar_phases.deadvar
+LEFT JOIN template_deadvar_maps ON template_deadvar_maps.template = assignment_templates.assignment_type AND template_deadvar_maps.class_name = assignment_templates.class_name AND template_deadvar_maps.deadvar = lp_template_deadvar_phases.deadvar
+
+CREATE TEMP TABLE dead_complete_table AS
+SELECT * 
+FROM complete_table 
+WHERE lp_templaet_deadvar_phases.
+
+CREATE TEMP TABLE assignment_deadlines AS
+SELECT 
+    classes.class_name,
+    assignments.assignment_name,
+    CAST(24*60*(julianday(datetime(COALESCE(assignment_deadvar_maps.deadline_date, template_deadvar_maps.deadline_date), '+' || (lp_template_deadvar_phases.hour_offset + COALESCE(assignment_deadvar_maps.deadline_hour, template_deadvar_maps.deadline_hour)) || ' hours', '+' || COALESCE(assignment_deadvar_maps.deadline_min, template_deadvar_maps.deadline_min) || ' minutes')) - julianday('now', 'localtime')) AS INTEGER)
 """

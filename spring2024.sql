@@ -178,11 +178,11 @@ CREATE TABLE assignments (
         AND commute_factor <= 1
     ),
     template TEXT,
-    pct_loss REAL CHECK (
+    pct_loss REAL NOT NULL CHECK (
         0.0 <= pct_loss
         AND pct_loss <= 100.0
     ),
-    submitted INT CHECK (
+    submitted INT NOT NULL CHECK (
         submitted = 0
         OR submitted = 1
     ),
@@ -198,10 +198,21 @@ VALUES(
         NULL,
         NULL,
         NULL,
-        'midterm'
+        'midterm',
+        0,
+        0
     );
 INSERT INTO assignments
-VALUES('proj2', 'cmsc330', 5.0, NULL, NULL, 'proj');
+VALUES(
+        'proj2',
+        'cmsc330',
+        5.0,
+        NULL,
+        NULL,
+        'proj',
+        0,
+        0
+    );
 INSERT INTO assignments
 VALUES(
         'midterm1',
@@ -209,14 +220,43 @@ VALUES(
         NULL,
         NULL,
         NULL,
-        'midterm'
+        'midterm',
+        0,
+        0
     );
 INSERT INTO assignments
-VALUES('quiz2', 'cmsc330', NULL, NULL, NULL, 'quiz');
+VALUES(
+        'quiz2',
+        'cmsc330',
+        NULL,
+        NULL,
+        NULL,
+        'quiz',
+        0,
+        0
+    );
 INSERT INTO assignments
-VALUES('hw4', 'cmsc351', NULL, NULL, NULL, 'hw');
+VALUES(
+        'hw4',
+        'cmsc351',
+        NULL,
+        NULL,
+        NULL,
+        'hw',
+        0,
+        0
+    );
 INSERT INTO assignments
-VALUES('hw3', 'stat410', NULL, NULL, NULL, 'hw');
+VALUES(
+        'hw3',
+        'stat410',
+        NULL,
+        NULL,
+        NULL,
+        'hw',
+        0,
+        0
+    );
 INSERT INTO assignments
 VALUES(
         'midterm1',
@@ -224,14 +264,43 @@ VALUES(
         NULL,
         NULL,
         NULL,
-        'midterm'
+        'midterm',
+        0,
+        0
     );
 INSERT INTO assignments
-VALUES('proj1', 'cmsc330', 30.0, 'stand', NULL, 'proj');
+VALUES(
+        'proj1',
+        'cmsc330',
+        30.0,
+        'stand',
+        NULL,
+        'proj',
+        0,
+        0
+    );
 INSERT INTO assignments
-VALUES('sa-01', 'psyc100', NULL, NULL, NULL, 'sa');
+VALUES(
+        'sa-01',
+        'psyc100',
+        NULL,
+        NULL,
+        NULL,
+        'sa',
+        0,
+        0
+    );
 INSERT INTO assignments
-VALUES('sa-02', 'psyc100', NULL, NULL, NULL, 'sa');
+VALUES(
+        'sa-02',
+        'psyc100',
+        NULL,
+        NULL,
+        NULL,
+        'sa',
+        0,
+        0
+    );
 CREATE TABLE assignment_deadvar_maps (
     assignment_name TEXT,
     class_name TEXT,
