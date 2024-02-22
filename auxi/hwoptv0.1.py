@@ -1,19 +1,11 @@
 """
 To do ASAP:
-    - Implement gradecurve
-        - X create gradebook table
-        - X update prindex computation (replace major factor with gradecurve)
-        - ? consolidate prindex computation using subqueries?
-        - X re-form db
-        - X check that prindex yields no compile time errors
-        - X insert_point_loss()
-        - X add gradebook to view
-        - insert all point losses
-    -  refactor gradebook into new pct_loss, submmited columns in assignments
-    -  add pct_loss updates (on unsubmits) in prindex computation
+    - X refactor gradebook into new pct_loss, submmited columns in assignments
+    -  add pct_loss updates (on unsubmits) in pre-prindex computation
     -  refactor prindex computation
+    -  fix current assignment entries
     -  refactor insert_assignment() to incorporate submitted boolean
-    -  input_grade()
+    -  input_grade(), with fraction parser (submits only)
 
 Future Work:
     - update_assignment()

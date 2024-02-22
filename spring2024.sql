@@ -123,6 +123,8 @@ INSERT INTO assignment_templates
 VALUES('sa', 'psyc100', 50.0, '5xD', 0.1);
 INSERT INTO assignment_templates
 VALUES('midterm', 'psyc100', 75.0, 'stand', 0.1);
+INSERT INTO assignment_templates
+VALUES('lc', 'psyc100', 5.0, 'stand', 0.0);
 CREATE TABLE template_deadvar_maps (
     template TEXT,
     class_name TEXT,
@@ -164,6 +166,8 @@ VALUES(
     );
 INSERT INTO template_deadvar_maps
 VALUES('midterm', 'psyc100', 0, NULL, 22, 50);
+INSERT INTO template_deadvar_maps
+VALUES('lc', 'psyc100', 0, NULL, 23, 59);
 CREATE TABLE assignments (
     assignment_name TEXT,
     class_name TEXT,
@@ -174,6 +178,14 @@ CREATE TABLE assignments (
         AND commute_factor <= 1
     ),
     template TEXT,
+    pct_loss REAL CHECK (
+        0.0 <= pct_loss
+        AND pct_loss <= 100.0
+    ),
+    submitted INT CHECK (
+        submitted = 0
+        OR submitted = 1
+    ),
     FOREIGN KEY (class_name) REFERENCES classes (class_name) ON UPDATE CASCADE,
     FOREIGN KEY (late_policy_name) REFERENCES lp_templates (late_policy_name) ON UPDATE CASCADE,
     FOREIGN KEY (template, class_name) REFERENCES assignment_templates (assignment_type, class_name) ON UPDATE CASCADE,
@@ -324,14 +336,4 @@ VALUES(
         NULL,
         NULL
     );
-CREATE TABLE gradebook (
-    class_name TEXT,
-    assignment_name TEXT,
-    pct_grade REAL NOT NULL,
-    value_in_class_points REAL,
-    template TEXT,
-    FOREIGN KEY (class_name) REFERENCES classes (class_name) ON DELETE CASCADE,
-    FOREIGN KEY (template, class_name) REFERENCES assignment_templates (assignment_type, class_name) ON DELETE CASCADE,
-    PRIMARY KEY (class_name, assignment_name)
-);
 COMMIT;
