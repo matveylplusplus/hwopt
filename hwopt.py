@@ -175,7 +175,9 @@ def insert_assignment_template():
         "assignment_templates",
         [(assignment_type, class_name, points, late_policy, commute_factor)],
     )
-    store("template_deadvar_maps", deadvar_map_entries)
+
+    if deadvar_map_entries != []:
+        store("template_deadvar_maps", deadvar_map_entries)
 
 
 def insert_assignment():
