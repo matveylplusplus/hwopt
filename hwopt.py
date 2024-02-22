@@ -501,6 +501,11 @@ def generate_prindex_table():
                 pretty_print(
                     "SELECT * FROM prindexes ORDER BY cprindex DESC", conn
                 )
+            try:
+                while True:
+                    pass
+            except KeyboardInterrupt:
+                pass
 
     except KeyboardInterrupt:
         conn.close()
