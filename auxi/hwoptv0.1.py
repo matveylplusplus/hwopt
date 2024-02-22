@@ -37,6 +37,7 @@ Future Work:
     - consistent column orders between tables
     - automate gradebook insertion somehow
     - drop_assignment()
+    - convert pct_loss column to just taking in real numbers from 0 to 1 because the we multiply by 100 in input_grade() and divide by it in prindex generation its literally so stupid 
 """
 
 import pandas as pd
@@ -1136,4 +1137,23 @@ SELECT
     classes.class_name,
     assignments.assignment_name,
     CAST(24*60*(julianday(datetime(COALESCE(assignment_deadvar_maps.deadline_date, template_deadvar_maps.deadline_date), '+' || (lp_template_deadvar_phases.hour_offset + COALESCE(assignment_deadvar_maps.deadline_hour, template_deadvar_maps.deadline_hour)) || ' hours', '+' || COALESCE(assignment_deadvar_maps.deadline_min, template_deadvar_maps.deadline_min) || ' minutes')) - julianday('now', 'localtime')) AS INTEGER)
+
+
+            UPDATE assignments
+            SET 
+                submitted = 1,
+                pct_loss = accum.passed_phase_sum
+            FROM (
+                SELECT 
+                    assignments.class_name,
+                    assignments.assignment_name,
+                    SUM(CASE WHEN (CAST(24*60*(julianday(datetime(COALESCE(assignment_deadvar_maps.deadline_date, template_deadvar_maps.deadline_date), '+' || (lp_template_deadvar_phases.hour_offset + COALESCE(assignment_deadvar_maps.deadline_hour, template_deadvar_maps.deadline_hour)) || ' hours', '+' || COALESCE(assignment_deadvar_maps.deadline_min, template_deadvar_maps.deadline_min) || ' minutes')) - julianday('2024-02-09 00:00:00', 'localtime')) AS INTEGER) <= 0) THEN phase_value ELSE 0.0 END) * 100.0 AS passed_phase_sum
+                FROM assignments
+                    LEFT JOIN assignment_templates ON assignment_templates.assignment_type = assignments.template AND assignment_templates.class_name = assignments.class_name
+                    LEFT JOIN lp_template_deadvar_phases ON lp_template_deadvar_phases.late_policy_name = COALESCE(assignments.late_policy_name, assignment_templates.late_policy_name)
+                    LEFT JOIN assignment_deadvar_maps ON assignment_deadvar_maps.assignment_name = assignments.assignment_name AND assignment_deadvar_maps.class_name = assignments.class_name AND assignment_deadvar_maps.deadvar = lp_template_deadvar_phases.deadvar
+                    LEFT JOIN template_deadvar_maps ON template_deadvar_maps.template = assignment_templates.assignment_type AND template_deadvar_maps.class_name = assignment_templates.class_name AND template_deadvar_maps.deadvar = lp_template_deadvar_phases.deadvar
+                GROUP BY assignments.class_name, assignments.assignment_name
+                ) AS accum
+            WHERE assignments.class_name = 'cmsc330' AND assignments.assignment_name = 'quiz1' AND assignments.submitted = 0
 """
