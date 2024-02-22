@@ -336,6 +336,7 @@ def grade_assignment():
             (grade, class_name, assignment_name),
         )
     conn.close()
+    print("Graded!")
 
 
 def submit_assignment():
@@ -375,6 +376,7 @@ def submit_assignment():
             (datetime_submit, class_name, assignment_name),
         )
     conn.close()
+    print("Submitted!")
 
 
 def get_insert_input() -> str:
