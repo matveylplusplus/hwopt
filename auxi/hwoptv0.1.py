@@ -6,11 +6,11 @@ To do ASAP:
     - X fix current assignment entries
     - . refactor insert_assignment() to put in null for pct_loss and submitted
     - X remove all references to gradebook
-    -  submit function
+    - . submit function
     - . grade(), with fraction parser (submits only)
-    - add grade to main menu
-    - add submit to main menu
-    - move pct_loss update out to run every time user wants to view the assignments() table or compute the prindex
+    - X add grade to main menu
+    - X add submit to main menu
+    - . move pct_loss update out to run every time user wants to view the assignments() table or compute the prindex
     -  put in past assignments 
 
 Future Work:

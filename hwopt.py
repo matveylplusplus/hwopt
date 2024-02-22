@@ -383,7 +383,6 @@ def get_insert_input() -> str:
     print(" - (2) Late Policy")
     print(" - (3) Assignment Template")
     print(" - (4) Assignment")
-    print(" - (5) Grade")
     print(" - (Ctrl+C) get me the hell outta here")
     return input()
 
@@ -398,8 +397,6 @@ def process_insert_input(pick: str):
             insert_assignment_template()
         elif pick == "4":
             insert_assignment()
-        elif pick == "5":
-            grade_assignment()()
     except KeyboardInterrupt:
         print()
         pass
@@ -413,13 +410,11 @@ def insert_loop():
         pass
 
 
-def generate_prindex_table():
+def update_loss():
     conn = connect_to_db()
-    # conn.enable_load_extension(True)
-    # conn.load_extension("")
     with conn:
         c = conn.cursor()
-        c.executescript(
+        c.execute(
             """
             UPDATE assignments
             SET pct_loss = accum.passed_phase_sum
@@ -434,7 +429,18 @@ def generate_prindex_table():
                 GROUP BY assignments.class_name, assignments.assignment_name
                 ) AS accum
             WHERE assignments.assignment_name = accum.assignment_name AND assignments.class_name = accum.class_name AND assignments.submitted = 0;
+            """
+        )
+    conn.close()
 
+
+def generate_prindex_table():
+    update_loss()
+    conn = connect_to_db()
+    with conn:
+        c = conn.cursor()
+        c.executescript(
+            """
             CREATE TEMP TABLE p_parts AS
             SELECT 
                 assignments.assignment_name, 
@@ -509,6 +515,7 @@ def pretty_print(query: str, conn: sqlite3.Connection):
 def view_loop():
     try:
         while True:
+            update_loss()
             print("\nWhich table would you like to view?")
             table_list = [
                 "Classes",
@@ -545,6 +552,8 @@ def get_menu_input() -> str:
     print(" - (1) Generate prindex")
     print(" - (2) Insert into hwopt")
     print(" - (3) View tables")
+    print(" - (4) Grade an assignment")
+    print(" - (5) Submit an assignment")
     print(" - (Ctrl+C) Quit hwopt")
     return input()
 
@@ -556,6 +565,10 @@ def process_menu_input(pick: str) -> int:
         insert_loop()
     elif pick == "3":
         view_loop()
+    elif pick == "4":
+        grade_assignment()
+    elif pick == "5":
+        submit_assignment()
     else:
         return 0
     return 1
