@@ -4,6 +4,13 @@ from dateutil import parser
 from collections import deque
 import pandas as pd
 
+"""
+started on the second
+thought it would be done in a weekend
+finished on the twenty second
+what a fucked up day
+"""
+
 
 def connect_to_db() -> sqlite3.Connection:
     conn = sqlite3.connect(f"hwopt.db")
