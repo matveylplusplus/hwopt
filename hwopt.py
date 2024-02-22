@@ -304,52 +304,77 @@ def insert_assignment():
             )
     store(
         "assignments",
-        [(assignment_name, class_name, *plc, template)],
+        [(assignment_name, class_name, *plc, template, None, None)],
     )
     store("assignment_deadvar_maps", deadvar_map_entries)
 
 
-def insert_grade():
+def grade_assignment():
     pre_input_fix = " - "
     post_input_fix = ": "
 
     print("\nProvide the following information (or hit Ctrl+C to exit)...")
     class_name = input(f"{pre_input_fix}class name{post_input_fix}")
-    template = null_sieve(input(f"{pre_input_fix}template{post_input_fix}"))
     assignment_name = input(f"{pre_input_fix}assignment name{post_input_fix}")
-    grade = input(f"{pre_input_fix}grade (pct){post_input_fix}")
+    grade = input(
+        f"{pre_input_fix}grade (point score / point total){post_input_fix}"
+    )
 
     # fraction parse
-    if grade is not None and "/" in grade:
-        split_frac = grade.split("/")
-        grade = str(Decimal(int(split_frac[0])) / Decimal(int(split_frac[1])))
+    split_frac = grade.split("/")
+    grade = str(Decimal(int(split_frac[0])) / Decimal(int(split_frac[1])))
 
-    template_excerpt = None
     conn = connect_to_db()
-    if template is not None:
+    with conn:
+        c = conn.cursor()
+        c.execute(
+            f"""
+                  UPDATE assignments
+                  SET pct_loss = 1.0 - ?
+                  WHERE class_name = ? AND assignment_name = ? AND submitted = 1
+                  """,
+            (grade, class_name, assignment_name),
+        )
+    conn.close()
+
+
+def submit_assignment():
+    pre_input_fix = " - "
+    post_input_fix = ": "
+
+    print("\nProvide the following information (or hit Ctrl+C to exit)...")
+    class_name = input(f"{pre_input_fix}class name{post_input_fix}")
+    assignment_name = input(f"{pre_input_fix}assignment name{post_input_fix}")
+    datetime_submit = input(
+        f"{pre_input_fix}datetime of submission{post_input_fix}"
+    )
+    if datetime_submit is not "now":
+        datetime_submit = str(parser.parse(datetime_submit))
+
+    conn = connect_to_db()
+    with conn:
         c = conn.cursor()
         c.execute(
             """
-            SELECT points
-            FROM assignment_templates
-            WHERE assignment_type = ? AND class_name = ?
-        """,
-            (template, class_name),
+            UPDATE assignments
+            SET 
+                submitted = 1
+                pct_loss = accum.passed_phase_sum
+            FROM (
+                SELECT assignments.class_name, assignments.assignment_name, SUM(phase_value) * 100.0 AS passed_phase_sum
+                FROM assignments
+                LEFT JOIN assignment_templates ON assignment_templates.assignment_type = assignments.template AND assignment_templates.class_name = assignments.class_name
+                LEFT JOIN lp_template_deadvar_phases ON lp_template_deadvar_phases.late_policy_name = COALESCE(assignments.late_policy_name, assignment_templates.late_policy_name)
+                LEFT JOIN assignment_deadvar_maps ON assignment_deadvar_maps.assignment_name = assignments.assignment_name AND assignment_deadvar_maps.class_name = assignments.class_name AND assignment_deadvar_maps.deadvar = lp_template_deadvar_phases.deadvar
+                LEFT JOIN template_deadvar_maps ON template_deadvar_maps.template = assignment_templates.assignment_type AND template_deadvar_maps.class_name = assignment_templates.class_name AND template_deadvar_maps.deadvar = lp_template_deadvar_phases.deadvar
+                WHERE CAST(24*60*(julianday(datetime(COALESCE(assignment_deadvar_maps.deadline_date, template_deadvar_maps.deadline_date), '+' || (lp_template_deadvar_phases.hour_offset + COALESCE(assignment_deadvar_maps.deadline_hour, template_deadvar_maps.deadline_hour)) || ' hours', '+' || COALESCE(assignment_deadvar_maps.deadline_min, template_deadvar_maps.deadline_min) || ' minutes')) - julianday(?, 'localtime')) AS INTEGER) <= 0
+                GROUP BY assignments.class_name, assignments.assignment_name
+                ) AS accum
+            WHERE class_name = ? AND assignment_name = ? AND submitted = 0
+            """,
+            (datetime_submit, class_name, assignment_name),
         )
-        template_excerpt = c.fetchone()
-    post_point_str = (
-        " (overriding template)" if template_excerpt is not None else ""
-    )
-    value_in_class_points = null_sieve(
-        input(
-            f"{pre_input_fix}assignment value in class points{post_point_str}{post_input_fix}"
-        )
-    )
-
-    store(
-        "gradebook",
-        [(class_name, assignment_name, grade, value_in_class_points, template)],
-    )
+    conn.close()
 
 
 def get_insert_input() -> str:
@@ -374,7 +399,7 @@ def process_insert_input(pick: str):
         elif pick == "4":
             insert_assignment()
         elif pick == "5":
-            insert_grade()
+            grade_assignment()()
     except KeyboardInterrupt:
         print()
         pass
@@ -490,14 +515,12 @@ def view_loop():
                 "Late Policies",
                 "Assignment Templates",
                 "Assignments",
-                "Gradebook",
             ]
             dbtable_list = [
                 "classes",
                 "lp_templates",
                 "assignment_templates",
                 "assignments",
-                "gradebook",
             ]
 
             for i in range(len(table_list)):

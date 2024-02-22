@@ -4,9 +4,13 @@ To do ASAP:
     - X add pct_loss updates (on unsubmits) in pre-prindex computation
     - X refactor prindex computation
     - X fix current assignment entries
-    -  refactor insert_assignment() to incorporate submitted boolean (user does not determine pct_loss unless grading)
+    - . refactor insert_assignment() to put in null for pct_loss and submitted
+    - X remove all references to gradebook
     -  submit function
-    -  input_grade(), with fraction parser (submits only)
+    - . grade(), with fraction parser (submits only)
+    - add grade to main menu
+    - add submit to main menu
+    - move pct_loss update out to run every time user wants to view the assignments() table or compute the prindex
     -  put in past assignments 
 
 Future Work:
