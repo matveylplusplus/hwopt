@@ -304,7 +304,7 @@ def insert_assignment():
             )
     store(
         "assignments",
-        [(assignment_name, class_name, *plc, template, None, None)],
+        [(assignment_name, class_name, *plc, template, 0.0, 0)],
     )
     store("assignment_deadvar_maps", deadvar_map_entries)
 
