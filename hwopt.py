@@ -348,7 +348,7 @@ def submit_assignment():
     datetime_submit = input(
         f"{pre_input_fix}datetime of submission{post_input_fix}"
     )
-    if datetime_submit is not "now":
+    if datetime_submit != "now":
         datetime_submit = str(parser.parse(datetime_submit))
 
     conn = connect_to_db()
@@ -452,6 +452,8 @@ def generate_prindex_table():
             LEFT JOIN lp_template_deadvar_phases ON lp_template_deadvar_phases.late_policy_name = COALESCE(assignments.late_policy_name, assignment_templates.late_policy_name)
             LEFT JOIN assignment_deadvar_maps ON assignment_deadvar_maps.assignment_name = assignments.assignment_name AND assignment_deadvar_maps.class_name = assignments.class_name AND assignment_deadvar_maps.deadvar = lp_template_deadvar_phases.deadvar
             LEFT JOIN template_deadvar_maps ON template_deadvar_maps.template = assignment_templates.assignment_type AND template_deadvar_maps.class_name = assignment_templates.class_name AND template_deadvar_maps.deadvar = lp_template_deadvar_phases.deadvar
+            WHERE 0 < p_summand AND p_summand <= phase_value;
+
 
             CREATE TEMP TABLE class_point_losses AS
             SELECT class_name, COALESCE(SUM(point_losses), 0.0) AS total_points_lost
@@ -480,7 +482,6 @@ def generate_prindex_table():
                 INNER JOIN classes ON classes.class_name = assignments.class_name
                 INNER JOIN class_point_losses ON class_point_losses.class_name = classes.class_name
                 INNER JOIN major_maps ON major_maps.major_state = classes.major_state
-                WHERE 0 < p_parts.p_summand AND p_parts.p_summand <= phase_value;
                 GROUP BY assignments.assignment_name, assignments.class_name
                 );
         """
