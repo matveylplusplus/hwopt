@@ -469,12 +469,13 @@ def generate_prindex_table():
             LEFT JOIN template_deadvar_maps ON template_deadvar_maps.template = assignment_templates.assignment_type AND template_deadvar_maps.class_name = assignment_templates.class_name AND template_deadvar_maps.deadvar = lp_template_deadvar_phases.deadvar
             WHERE 0 < p_summand AND p_summand <= phase_value;
 
-
             CREATE TEMP TABLE class_point_losses AS
-            SELECT class_name, COALESCE(SUM(point_losses), 0.0) AS total_points_lost
+            SELECT class_name, major_state, total_class_points, COALESCE(SUM(point_losses), 0.0) AS total_points_lost
             FROM (
                 SELECT 
-                    classes.class_name, 
+                    classes.class_name,
+                    classes.major_state, 
+                    classes.total_class_points,
                     assignments.assignment_name, 
                     (assignments.pct_loss / 100.0) * COALESCE(assignments.points, assignment_templates.points) AS point_losses
                 FROM classes
@@ -483,21 +484,29 @@ def generate_prindex_table():
             )
             GROUP BY class_name;
 
+            CREATE TEMP TABLE the_rest AS 
+            SELECT 
+                assignments.class_name,
+                assignments.assignment_name,
+                COALESCE(assignments.points, assignment_templates.points) AS points,
+                COALESCE(assignments.commute_factor, assignment_templates.commute_factor) AS commute_factor,
+                (((1.0 - (major_maps.passing_grade / 100.0)) * class_point_losses.total_class_points) - class_point_losses.total_points_lost) AS scale
+            FROM assignments
+            LEFT JOIN assignment_templates ON assignment_templates.assignment_type = assignments.template AND assignment_templates.class_name = assignments.class_name
+            INNER JOIN class_point_losses ON class_point_losses.class_name = assignments.class_name
+            INNER JOIN major_maps ON major_maps.major_state = class_point_losses.major_state;
+
             CREATE TEMP TABLE prindexes AS
             SELECT class_name, assignment_name, prindex, commute_factor*prindex AS cprindex
             FROM (
                 SELECT 
-                    assignments.assignment_name, 
-                    assignments.class_name, 
-                    (((1.0 - major_maps.starting_offset) * ((100.0 * class_point_losses.total_points_lost) / ((100.0 - major_maps.passing_grade) * classes.total_class_points))) + major_maps.starting_offset) * COALESCE(assignments.points, assignment_templates.points) * (1.0 / classes.total_class_points) * (SUM(p_parts.p_summand)) * 1000000.0 as prindex, 
-                    COALESCE(assignments.commute_factor, assignment_templates.commute_factor) AS commute_factor
+                    the_rest.assignment_name, 
+                    the_rest.class_name, 
+                    (CASE WHEN (the_rest.points < the_rest.scale) THEN (the_rest.points / the_rest.scale) ELSE 1.0 END) * (SUM(p_parts.p_summand)) * 100000.0 as prindex, 
+                    the_rest.commute_factor AS commute_factor
                 FROM p_parts
-                INNER JOIN assignments ON assignments.assignment_name = p_parts.assignment_name AND assignments.class_name = p_parts.class_name
-                LEFT JOIN assignment_templates ON assignment_templates.assignment_type = assignments.template AND assignment_templates.class_name = assignments.class_name
-                INNER JOIN classes ON classes.class_name = assignments.class_name
-                INNER JOIN class_point_losses ON class_point_losses.class_name = classes.class_name
-                INNER JOIN major_maps ON major_maps.major_state = classes.major_state
-                GROUP BY assignments.assignment_name, assignments.class_name
+                INNER JOIN the_rest ON the_rest.assignment_name = p_parts.assignment_name AND the_rest.class_name = p_parts.class_name
+                GROUP BY the_rest.assignment_name, the_rest.class_name
                 );
         """
         )

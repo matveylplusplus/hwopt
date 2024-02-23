@@ -1,17 +1,7 @@
 """
 To do ASAP:
-    - X refactor gradebook into new pct_loss, submmited columns in assignments
-    - X add pct_loss updates (on unsubmits) in pre-prindex computation
-    - X refactor prindex computation
-    - X fix current assignment entries
-    - . refactor insert_assignment() to put in null for pct_loss and submitted
-    - X remove all references to gradebook
-    - . submit function
-    - . grade(), with fraction parser (submits only)
-    - X add grade to main menu
-    - X add submit to main menu
-    - . move pct_loss update out to run every time user wants to view the assignments() table or compute the prindex
-    -  put in past assignments 
+    - re-init db without starting_offset
+    - fix prindex computation
 
 Future Work:
     - update_assignment()
@@ -1157,4 +1147,8 @@ SELECT
                 GROUP BY assignments.class_name, assignments.assignment_name
                 ) AS accum
             WHERE assignments.class_name = 'cmsc330' AND assignments.assignment_name = 'quiz1' AND assignments.submitted = 0
-"""
+
+(CASE WHEN (((1.0 - (major_maps.passing_grade / 100.0)) * classes.total_class_points) - class_point_losses.total_points_lost) > COALESCE(assignments.points, assignment_templates.points)) THEN (COALESCE(assignments.points, assignment_templates.points) / ) )
+
+CAST(1.0 / (CAST(24*60*(julianday(datetime('2024-02-29', '+' || (0+22) || ' hours', '+' || 50 || ' minutes')) - julianday('now', 'localtime')) AS INTEGER)) AS REAL);
+            """

@@ -5,13 +5,12 @@ CREATE TABLE major_maps (
         major_state == 'm'
         OR major_state == 'g'
     ),
-    passing_grade REAL NOT NULL,
-    starting_offset REAL NOT NULL
+    passing_grade REAL NOT NULL
 );
 INSERT INTO major_maps
-VALUES('m', 70.0, 0.4000000000000000222);
+VALUES('m', 70.0);
 INSERT INTO major_maps
-VALUES('g', 60.0, 0.2000000000000000111);
+VALUES('g', 60.0);
 CREATE TABLE classes (
     class_name TEXT PRIMARY KEY,
     major_state TEXT NOT NULL,
@@ -26,6 +25,10 @@ INSERT INTO classes
 VALUES('psyc100', 'g', 950);
 INSERT INTO classes
 VALUES('stat410', 'm', 100);
+INSERT INTO classes
+VALUES('geog201', 'g', 100);
+INSERT INTO classes
+VALUES('geog211', 'g', 600);
 CREATE TABLE lp_templates (late_policy_name TEXT PRIMARY KEY);
 INSERT INTO lp_templates
 VALUES('5x3');
@@ -169,6 +172,24 @@ INSERT INTO assignment_templates
 VALUES('lc', 'psyc100', 5.0, 'stand', 0.0);
 INSERT INTO assignment_templates
 VALUES('ws', 'psyc100', NULL, '5xD', 0.0);
+INSERT INTO assignment_templates
+VALUES(
+        'proj_gfa',
+        'cmsc330',
+        30.0,
+        'stand',
+        0.59999999999999997779
+    );
+INSERT INTO assignment_templates
+VALUES('hw', 'geog201', 10.0, 'stand', 0.0);
+INSERT INTO assignment_templates
+VALUES(
+        'lab',
+        'geog211',
+        100.0,
+        '5x3',
+        0.10000000000000000555
+    );
 CREATE TABLE template_deadvar_maps (
     template TEXT,
     class_name TEXT,
@@ -223,6 +244,19 @@ VALUES(
         23,
         59
     );
+INSERT INTO template_deadvar_maps
+VALUES(
+        'proj_gfa',
+        'cmsc330',
+        0,
+        '2024-05-09 00:00:00',
+        23,
+        59
+    );
+INSERT INTO template_deadvar_maps
+VALUES('hw', 'geog201', 0, NULL, 23, 59);
+INSERT INTO template_deadvar_maps
+VALUES('lab', 'geog211', 0, NULL, 23, 59);
 CREATE TABLE assignments (
     assignment_name TEXT,
     class_name TEXT,
@@ -426,6 +460,72 @@ VALUES(
         0.0,
         0
     );
+INSERT INTO assignments
+VALUES(
+        'proj1',
+        'cmsc330',
+        3.0,
+        NULL,
+        NULL,
+        'proj',
+        100.0,
+        0
+    );
+INSERT INTO assignments
+VALUES(
+        'proj1gfa',
+        'cmsc330',
+        NULL,
+        NULL,
+        NULL,
+        'proj_gfa',
+        0.0,
+        0
+    );
+INSERT INTO assignments
+VALUES(
+        'hw1',
+        'geog201',
+        NULL,
+        NULL,
+        NULL,
+        'hw',
+        100.0,
+        0
+    );
+INSERT INTO assignments
+VALUES(
+        'midterm1',
+        'geog201',
+        10.0,
+        'stand',
+        0.10000000000000000555,
+        NULL,
+        0.0,
+        0
+    );
+INSERT INTO assignments
+VALUES(
+        'lab1',
+        'geog211',
+        NULL,
+        NULL,
+        NULL,
+        'lab',
+        100.0,
+        0
+    );
+INSERT INTO assignments
+VALUES(
+        'lab2',
+        'geog211',
+        NULL,
+        NULL,
+        NULL,
+        'lab',
+        0.0,
+        0
+    );
 CREATE TABLE assignment_deadvar_maps (
     assignment_name TEXT,
     class_name TEXT,
@@ -599,6 +699,51 @@ VALUES(
         'psyc100',
         0,
         '2024-03-01 00:00:00',
+        NULL,
+        NULL
+    );
+INSERT INTO assignment_deadvar_maps
+VALUES(
+        'proj1',
+        'cmsc330',
+        0,
+        '2024-02-13 00:00:00',
+        NULL,
+        NULL
+    );
+INSERT INTO assignment_deadvar_maps
+VALUES(
+        'hw1',
+        'geog201',
+        0,
+        '2024-02-13 00:00:00',
+        NULL,
+        NULL
+    );
+INSERT INTO assignment_deadvar_maps
+VALUES(
+        'midterm1',
+        'geog201',
+        0,
+        '2024-02-29 00:00:00',
+        12,
+        25
+    );
+INSERT INTO assignment_deadvar_maps
+VALUES(
+        'lab1',
+        'geog211',
+        0,
+        '2024-02-16 00:00:00',
+        NULL,
+        NULL
+    );
+INSERT INTO assignment_deadvar_maps
+VALUES(
+        'lab2',
+        'geog211',
+        0,
+        '2024-03-15 00:00:00',
         NULL,
         NULL
     );
