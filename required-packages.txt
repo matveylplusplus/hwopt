@@ -1,0 +1,8 @@
+name: hwopt
+channels:
+  - defaults
+dependencies:
+  - python
+  - python-dateutil
+  - pandas
+prefix: /home/matthecrazyguy/miniconda3/envs/hwopt
