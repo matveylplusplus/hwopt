@@ -4,6 +4,7 @@ from dateutil import parser
 from collections import deque
 import pandas as pd
 
+
 def connect_to_db() -> sqlite3.Connection:
     conn = sqlite3.connect(f"hwopt.db")
     conn.execute("PRAGMA foreign_keys = ON")
